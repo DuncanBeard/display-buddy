@@ -15,6 +15,10 @@ public enum CombineButtonsOption { Always = 0, WhenFull = 1, Never = 2 }
 [JsonConverter(typeof(JsonStringEnumConverter))]
 public enum TaskbarSizeOption { Small = 0, Default = 1, Large = 2 }
 
+/// <summary>How to measure the display width.</summary>
+[JsonConverter(typeof(JsonStringEnumConverter))]
+public enum ResolutionMode { Effective, Physical }
+
 /// <summary>A resolution profile that activates at a minimum effective width.</summary>
 public sealed class ProfileConfig
 {
@@ -28,7 +32,14 @@ public sealed class ProfileConfig
 /// <summary>Root configuration model.</summary>
 public sealed class AppConfig
 {
-    public int RefreshIntervalMs { get; set; } = 5000;
+    private const string SchemaUrl = "https://raw.githubusercontent.com/duncanbeard/taskbar-alignment-tool/main/schema/config.schema.json";
+
+    [JsonPropertyName("$schema")]
+    public string Schema { get; set; } = SchemaUrl;
+
+    public int RefreshIntervalMs { get; set; } = 60000;
+    public bool ShowNotifications { get; set; } = true;
+    public ResolutionMode ResolutionMode { get; set; } = ResolutionMode.Effective;
     public List<ProfileConfig> Profiles { get; set; } = [];
 
     private static readonly JsonSerializerOptions JsonOptions = new()
@@ -41,7 +52,9 @@ public sealed class AppConfig
     /// <summary>Returns the default config with 3 preset profiles.</summary>
     public static AppConfig CreateDefault() => new()
     {
-        RefreshIntervalMs = 5000,
+        RefreshIntervalMs = 60000,
+        ShowNotifications = true,
+        ResolutionMode = ResolutionMode.Effective,
         Profiles =
         [
             new ProfileConfig

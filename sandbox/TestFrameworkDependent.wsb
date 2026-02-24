@@ -1,0 +1,21 @@
+<Configuration>
+  <MappedFolders>
+    <MappedFolder>
+      <HostFolder>C:\Users\duncanbeard\Personal\taskbar-alignment-tool\publish</HostFolder>
+      <SandboxFolder>C:\Users\Public\TaskbarAlignmentTool</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+    <MappedFolder>
+      <HostFolder>C:\Users\duncanbeard\Personal\taskbar-alignment-tool\sandbox</HostFolder>
+      <SandboxFolder>C:\Users\Public\Sandbox</SandboxFolder>
+      <ReadOnly>true</ReadOnly>
+    </MappedFolder>
+  </MappedFolders>
+  <LogonCommand>
+    <!-- Install .NET 8 runtime then launch the framework-dependent build -->
+    <Command>powershell -ExecutionPolicy Bypass -File C:\Users\Public\Sandbox\setup-framework-dependent.ps1</Command>
+  </LogonCommand>
+  <MemoryInMB>4096</MemoryInMB>
+  <Networking>Enable</Networking>
+  <vGPU>Enable</vGPU>
+</Configuration>

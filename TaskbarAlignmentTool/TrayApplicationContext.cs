@@ -19,10 +19,14 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private readonly ToolStripMenuItem _profileItem;
     private readonly ToolStripMenuItem _startupItem;
 
+    private static readonly Lazy<bool> _isMsixPackaged = new(DetectMsixPackaged);
+
+    private int _profileSwitchCount;
+
     public TrayApplicationContext(AppConfig config)
     {
         _config = config;
-        _monitor = new DisplayMonitor(config.RefreshIntervalMs);
+        _monitor = new DisplayMonitor(config.RefreshIntervalMs, config.ResolutionMode);
 
         _statusItem = new ToolStripMenuItem("Initializing...") { Enabled = false };
         _profileItem = new ToolStripMenuItem("Profile: —") { Enabled = false };
@@ -40,6 +44,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_startupItem);
         menu.Items.Add("Refresh Now", null, OnRefresh);
+        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(CreateDiagnosticsMenu());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, OnExit);
 
@@ -65,8 +71,18 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private void ApplyForWidth(int effectiveWidth)
     {
         var profile = _config.ResolveProfile(effectiveWidth);
-        if (profile != null)
-            TaskbarAligner.ApplyProfile(profile);
+        if (profile != null && TaskbarAligner.ApplyProfile(profile))
+        {
+            _profileSwitchCount++;
+            if (_config.ShowNotifications)
+            {
+                _notifyIcon.ShowBalloonTip(
+                    3000,
+                    "Taskbar Alignment Tool",
+                    $"Switched to \"{profile.Name}\" ({effectiveWidth}px)",
+                    ToolTipIcon.Info);
+            }
+        }
         UpdateStatus(effectiveWidth, profile);
     }
 
@@ -95,7 +111,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private void OnReloadConfig(object? sender, EventArgs e)
     {
         _config = AppConfig.Load();
-        _monitor.UpdateInterval(_config.RefreshIntervalMs);
+        _monitor.UpdateInterval(_config.RefreshIntervalMs, _config.ResolutionMode);
         _monitor.Refresh(force: true);
     }
 
@@ -109,7 +125,9 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _startupItem.Checked = IsStartupEnabled();
     }
 
-    private static bool IsMsixPackaged()
+    private static bool IsMsixPackaged() => _isMsixPackaged.Value;
+
+    private static bool DetectMsixPackaged()
     {
         try
         {
@@ -175,6 +193,22 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryPath, true);
         key?.DeleteValue(StartupValueName, false);
+    }
+
+    private ToolStripMenuItem CreateDiagnosticsMenu()
+    {
+        var diag = new ToolStripMenuItem("Diagnostics");
+        diag.DropDownOpening += (_, _) =>
+        {
+            diag.DropDownItems.Clear();
+            var proc = System.Diagnostics.Process.GetCurrentProcess();
+            var memMb = proc.WorkingSet64 / (1024.0 * 1024.0);
+            var cpuTime = proc.TotalProcessorTime;
+            diag.DropDownItems.Add(new ToolStripMenuItem($"Memory: {memMb:F1} MB") { Enabled = false });
+            diag.DropDownItems.Add(new ToolStripMenuItem($"CPU time: {cpuTime.TotalSeconds:F2}s") { Enabled = false });
+            diag.DropDownItems.Add(new ToolStripMenuItem($"Profile switches: {_profileSwitchCount}") { Enabled = false });
+        };
+        return diag;
     }
 
     private void OnExit(object? sender, EventArgs e)

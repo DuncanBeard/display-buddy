@@ -1,0 +1,37 @@
+{
+  // "$schema": "https://raw.githubusercontent.com/duncanbeard/taskbar-alignment-tool/main/schema/config.schema.json",
+  "$schema": "../schema/config.schema.json",
+  "refreshIntervalMs": 60000,
+  "showNotifications": true,
+  "resolutionMode": "Physical",
+  "profiles": [
+    {
+      "name": "Compact",
+      "minWidth": 0,
+      "alignment": "Left",
+      "combineButtons": "Always",
+      "taskbarSize": "Default"
+    },
+    {
+      "name": "Small",
+      "minWidth": 1920,
+      "alignment": "Left",
+      "combineButtons": "WhenFull",
+      "taskbarSize": "Default"
+    },
+    {
+      "name": "Standard",
+      "minWidth": 2560,
+      "alignment": "Left",
+      "combineButtons": "Never",
+      "taskbarSize": "Default"
+    },
+    {
+      "name": "Ultrawide",
+      "minWidth": 3440,
+      "alignment": "Center",
+      "combineButtons": "Never",
+      "taskbarSize": "Default"
+    }
+  ]
+}

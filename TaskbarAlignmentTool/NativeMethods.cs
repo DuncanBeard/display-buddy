@@ -29,6 +29,10 @@ internal static partial class NativeMethods
     public const int SHCNE_ASSOCCHANGED = 0x08000000;
     public const uint SHCNF_IDLIST = 0x0000;
 
+    // Display/DPI change messages
+    public const int WM_DISPLAYCHANGE = 0x007E;
+    public const int WM_DPICHANGED = 0x02E0;
+
     // Monitor DPI
     public const int MDT_EFFECTIVE_DPI = 0;
 
