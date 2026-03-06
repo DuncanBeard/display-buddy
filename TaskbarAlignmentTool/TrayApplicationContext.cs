@@ -15,9 +15,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private AppConfig _config;
     private readonly DisplayMonitor _monitor;
     private readonly NotifyIcon _notifyIcon;
-    private readonly ToolStripMenuItem _effectiveResItem;
-    private readonly ToolStripMenuItem _nativeResItem;
-    private readonly ToolStripMenuItem _profileItem;
+    private readonly ToolStripSeparator _monitorSectionEnd;
     private readonly ToolStripMenuItem _startupItem;
 
     private static readonly Lazy<bool> _isMsixPackaged = new(DetectMsixPackaged);
@@ -29,20 +27,14 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _config = config;
         _monitor = new DisplayMonitor(config.RefreshIntervalMs, config.ResolutionMode);
 
-        _effectiveResItem = new ToolStripMenuItem("Effective: —") { Enabled = false };
-        _nativeResItem = new ToolStripMenuItem("Native: —") { Enabled = false };
-        _profileItem = new ToolStripMenuItem("Profile: \u2014") { Enabled = false };
+        _monitorSectionEnd = new ToolStripSeparator();
         _startupItem = new ToolStripMenuItem("Run at Startup", null, OnToggleStartup)
         {
             Checked = IsStartupEnabled()
         };
 
         var menu = new ContextMenuStrip();
-        menu.Items.Add(_effectiveResItem);
-        menu.Items.Add(_nativeResItem);
-        menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add(_profileItem);
-        menu.Items.Add(new ToolStripSeparator());
+        menu.Items.Add(_monitorSectionEnd);
         menu.Items.Add("Open Config", null, OnOpenConfig);
         menu.Items.Add("Reload Config", null, OnReloadConfig);
         menu.Items.Add(new ToolStripSeparator());
@@ -52,6 +44,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(CreateDiagnosticsMenu());
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Exit", null, OnExit);
+
+        menu.Opening += OnMenuOpening;
 
         _notifyIcon = new NotifyIcon
         {
@@ -96,15 +90,6 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var profileName = profile?.Name ?? "None";
         bool unavailable = info.EffectiveWidth == 0 && info.EffectiveHeight == 0;
 
-        _effectiveResItem.Text = unavailable
-            ? "Resolution: unavailable"
-            : $"Effective: {info.EffectiveWidth}\u00d7{info.EffectiveHeight} ({info.ScalingPercent}%)";
-        _nativeResItem.Text = unavailable
-            ? string.Empty
-            : $"Native: {info.NativeWidth}\u00d7{info.NativeHeight}";
-        _nativeResItem.Visible = !unavailable;
-        _profileItem.Text = $"Profile: {profileName}";
-
         if (unavailable)
         {
             _notifyIcon.Text = "Resolution: unavailable";
@@ -129,6 +114,86 @@ internal sealed class TrayApplicationContext : ApplicationContext
         var oldIcon = _notifyIcon.Icon;
         _notifyIcon.Icon = RenderTrayIcon(info.EffectiveWidth);
         oldIcon?.Dispose();
+    }
+
+    private void OnMenuOpening(object? sender, System.ComponentModel.CancelEventArgs e)
+    {
+        var menu = _notifyIcon.ContextMenuStrip;
+        if (menu == null) return;
+
+        // Remove and dispose all dynamic items above the sentinel separator
+        while (menu.Items.Count > 0 && menu.Items[0] != _monitorSectionEnd)
+        {
+            var item = menu.Items[0];
+            menu.Items.RemoveAt(0);
+            item.Dispose();
+        }
+
+        var monitors = MonitorInfoProvider.GetAllMonitors();
+        var profile = _config.ResolveProfile(_monitor.EffectiveWidth);
+
+        if (monitors.Count == 0)
+        {
+            menu.Items.Insert(0, new ToolStripMenuItem("No displays detected") { Enabled = false });
+            return;
+        }
+
+        int insertIdx = 0;
+        for (int i = 0; i < monitors.Count; i++)
+        {
+            if (i > 0)
+                menu.Items.Insert(insertIdx++, new ToolStripSeparator());
+
+            foreach (var item in BuildMonitorMenuItems(monitors[i], profile))
+                menu.Items.Insert(insertIdx++, item);
+        }
+    }
+
+    private static List<ToolStripItem> BuildMonitorMenuItems(MonitorDisplayInfo monitor, ProfileConfig? profile)
+    {
+        var items = new List<ToolStripItem>();
+
+        // Monitor name header
+        items.Add(new ToolStripMenuItem(monitor.FriendlyName) { Enabled = false });
+
+        if (monitor.EffectiveWidth > 0)
+        {
+            items.Add(new ToolStripMenuItem(
+                $"  Effective: {monitor.EffectiveWidth}\u00d7{monitor.EffectiveHeight} ({monitor.ScalingPercent}%)") { Enabled = false });
+            items.Add(new ToolStripMenuItem(
+                $"  Native: {monitor.NativeWidth}\u00d7{monitor.NativeHeight}") { Enabled = false });
+        }
+        else
+        {
+            items.Add(new ToolStripMenuItem("  Resolution: unavailable") { Enabled = false });
+        }
+
+        // Profile line — primary monitor only
+        if (monitor.IsPrimary)
+        {
+            var profileName = profile?.Name ?? "None";
+            items.Add(new ToolStripMenuItem($"  Profile: {profileName}") { Enabled = false });
+        }
+
+        // Color depth — default to 8-bit for non-Advanced-Color SDR displays
+        string colorText = monitor.BitsPerChannel > 0
+            ? $"{monitor.BitsPerChannel}-bit"
+            : (monitor.HdrStatus == "N/A" ? "8-bit" : "N/A");
+        items.Add(new ToolStripMenuItem($"  Color: {colorText}") { Enabled = false });
+
+        // HDR
+        items.Add(new ToolStripMenuItem($"  HDR: {monitor.HdrStatus}") { Enabled = false });
+
+        // Refresh rate — rounded to integer Hz
+        string refreshText = monitor.RefreshRateHz > 0
+            ? $"{(int)Math.Round(monitor.RefreshRateHz)} Hz"
+            : "N/A";
+        items.Add(new ToolStripMenuItem($"  Refresh: {refreshText}") { Enabled = false });
+
+        // VRR
+        items.Add(new ToolStripMenuItem($"  VRR: {monitor.VrrStatus}") { Enabled = false });
+
+        return items;
     }
 
     private void OnRefresh(object? sender, EventArgs e)
