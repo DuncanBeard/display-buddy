@@ -20,6 +20,12 @@
       "default": true,
       "description": "Show a balloon notification when the active profile changes."
     },
+    "notificationDurationMs": {
+      "type": "integer",
+      "default": 1000,
+      "minimum": 500,
+      "description": "How long the profile-switch notification stays visible, in milliseconds."
+    },
     "resolutionMode": {
       "type": "string",
       "enum": ["Effective", "Physical"],

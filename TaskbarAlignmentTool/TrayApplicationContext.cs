@@ -15,7 +15,8 @@ internal sealed class TrayApplicationContext : ApplicationContext
     private AppConfig _config;
     private readonly DisplayMonitor _monitor;
     private readonly NotifyIcon _notifyIcon;
-    private readonly ToolStripMenuItem _statusItem;
+    private readonly ToolStripMenuItem _effectiveResItem;
+    private readonly ToolStripMenuItem _nativeResItem;
     private readonly ToolStripMenuItem _profileItem;
     private readonly ToolStripMenuItem _startupItem;
 
@@ -28,15 +29,18 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _config = config;
         _monitor = new DisplayMonitor(config.RefreshIntervalMs, config.ResolutionMode);
 
-        _statusItem = new ToolStripMenuItem("Initializing...") { Enabled = false };
-        _profileItem = new ToolStripMenuItem("Profile: —") { Enabled = false };
+        _effectiveResItem = new ToolStripMenuItem("Effective: —") { Enabled = false };
+        _nativeResItem = new ToolStripMenuItem("Native: —") { Enabled = false };
+        _profileItem = new ToolStripMenuItem("Profile: \u2014") { Enabled = false };
         _startupItem = new ToolStripMenuItem("Run at Startup", null, OnToggleStartup)
         {
             Checked = IsStartupEnabled()
         };
 
         var menu = new ContextMenuStrip();
-        menu.Items.Add(_statusItem);
+        menu.Items.Add(_effectiveResItem);
+        menu.Items.Add(_nativeResItem);
+        menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(_profileItem);
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add("Open Config", null, OnOpenConfig);
@@ -51,21 +55,21 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         _notifyIcon = new NotifyIcon
         {
-            Icon = LoadIcon(),
+            Icon = RenderTrayIcon(0),
             ContextMenuStrip = menu,
             Text = "Taskbar Alignment Tool",
             Visible = true
         };
 
-        _monitor.ResolutionChanged += OnResolutionChanged;
+        _monitor.DisplayInfoChanged += OnDisplayInfoChanged;
 
         // Apply profile immediately on startup
         ApplyForWidth(_monitor.EffectiveWidth);
     }
 
-    private void OnResolutionChanged(object? sender, int effectiveWidth)
+    private void OnDisplayInfoChanged(object? sender, DisplayInfo info)
     {
-        ApplyForWidth(effectiveWidth);
+        ApplyForWidth(info.EffectiveWidth);
     }
 
     private void ApplyForWidth(int effectiveWidth)
@@ -77,22 +81,54 @@ internal sealed class TrayApplicationContext : ApplicationContext
             if (_config.ShowNotifications)
             {
                 _notifyIcon.ShowBalloonTip(
-                    3000,
+                    _config.NotificationDurationMs,
                     "Taskbar Alignment Tool",
                     $"Switched to \"{profile.Name}\" ({effectiveWidth}px)",
                     ToolTipIcon.Info);
             }
         }
-        UpdateStatus(effectiveWidth, profile);
+        var displayInfo = _monitor.CurrentDisplayInfo;
+        UpdateStatus(displayInfo, profile);
     }
 
-    private void UpdateStatus(int effectiveWidth, ProfileConfig? profile)
+    private void UpdateStatus(DisplayInfo info, ProfileConfig? profile)
     {
         var profileName = profile?.Name ?? "None";
-        _statusItem.Text = $"Width: {effectiveWidth}px";
+        bool unavailable = info.EffectiveWidth == 0 && info.EffectiveHeight == 0;
+
+        _effectiveResItem.Text = unavailable
+            ? "Resolution: unavailable"
+            : $"Effective: {info.EffectiveWidth}\u00d7{info.EffectiveHeight} ({info.ScalingPercent}%)";
+        _nativeResItem.Text = unavailable
+            ? string.Empty
+            : $"Native: {info.NativeWidth}\u00d7{info.NativeHeight}";
+        _nativeResItem.Visible = !unavailable;
         _profileItem.Text = $"Profile: {profileName}";
-        // NotifyIcon.Text has a 127-char limit
-        _notifyIcon.Text = $"Taskbar: {profileName} ({effectiveWidth}px)";
+
+        if (unavailable)
+        {
+            _notifyIcon.Text = "Resolution: unavailable";
+            return;
+        }
+
+        // Format: "ProfileName | 1920×1080 (3840×2160 @ 200%)"
+        var resText = $"{info.EffectiveWidth}\u00d7{info.EffectiveHeight} ({info.NativeWidth}\u00d7{info.NativeHeight} @ {info.ScalingPercent}%)";
+        var tooltip = $"{profileName} | {resText}";
+        // Truncate profile name if tooltip exceeds 127 chars (NotifyIcon.Text limit is 127 + null)
+        if (tooltip.Length > 127)
+        {
+            var maxName = 127 - " | ".Length - resText.Length - "\u2026".Length;
+            if (maxName > 0)
+                tooltip = $"{profileName[..maxName]}\u2026 | {resText}";
+            else
+                tooltip = resText[..Math.Min(resText.Length, 127)];
+        }
+        _notifyIcon.Text = tooltip;
+
+        // Update tray icon with current width
+        var oldIcon = _notifyIcon.Icon;
+        _notifyIcon.Icon = RenderTrayIcon(info.EffectiveWidth);
+        oldIcon?.Dispose();
     }
 
     private void OnRefresh(object? sender, EventArgs e)
@@ -219,12 +255,80 @@ internal sealed class TrayApplicationContext : ApplicationContext
         Application.Exit();
     }
 
-    private static Icon LoadIcon()
+    /// <summary>
+    /// Renders a DPI-aware tray icon showing the current display width.
+    /// Auto-detects Windows light/dark theme for contrast.
+    /// </summary>
+    private static Icon RenderTrayIcon(int width)
     {
-        var dir = Path.GetDirectoryName(Application.ExecutablePath) ?? ".";
-        var iconPath = Path.Combine(dir, "icon.ico");
-        return File.Exists(iconPath)
-            ? new Icon(iconPath)
-            : SystemIcons.Application;
+        int dpi = GetSystemDpi();
+        int size = (int)(16 * dpi / 96.0);
+        float scale = size / 16f;
+        bool isDarkTheme = IsSystemDarkTheme();
+
+        using var bmp = new Bitmap(size, size);
+        using var g = Graphics.FromImage(bmp);
+        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
+        g.Clear(Color.Transparent);
+
+        // Background color adapts to theme
+        var bgColor = isDarkTheme
+            ? Color.FromArgb(255, 0, 150, 180)   // Teal on dark taskbar
+            : Color.FromArgb(255, 0, 120, 150);  // Darker teal on light taskbar
+        var textBrush = isDarkTheme ? Brushes.White : Brushes.White;
+
+        using var bgBrush = new SolidBrush(bgColor);
+        g.FillRectangle(bgBrush, 0, 0, size, size);
+
+        // Display width as the full icon content
+        var label = width.ToString();
+        float fontSize = label.Length <= 3 ? 7f : label.Length == 4 ? 5.5f : 4.5f;
+        using var font = new Font("Segoe UI", fontSize * scale, FontStyle.Bold, GraphicsUnit.Pixel);
+        var sf = new StringFormat
+        {
+            Alignment = StringAlignment.Center,
+            LineAlignment = StringAlignment.Center
+        };
+        var textRect = new RectangleF(0, 0, size, size);
+        g.DrawString(label, font, textBrush, textRect, sf);
+
+        return Icon.FromHandle(bmp.GetHicon());
+    }
+
+    /// <summary>
+    /// Checks if Windows is using dark mode for apps.
+    /// Registry: HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\SystemUsesLightTheme
+    /// 0 = dark, 1 = light
+    /// </summary>
+    private static bool IsSystemDarkTheme()
+    {
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
+                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", false);
+            var value = key?.GetValue("SystemUsesLightTheme");
+            if (value is int intVal)
+                return intVal == 0;
+        }
+        catch { }
+        return true; // Default to dark
+    }
+
+    private static int GetSystemDpi()
+    {
+        try
+        {
+            var hMonitor = NativeMethods.MonitorFromPoint(0, NativeMethods.MONITOR_DEFAULTTOPRIMARY);
+            if (hMonitor != nint.Zero &&
+                NativeMethods.GetDpiForMonitor(hMonitor, NativeMethods.MDT_EFFECTIVE_DPI, out uint dpiX, out _) == 0 &&
+                dpiX > 0)
+            {
+                return (int)dpiX;
+            }
+        }
+        catch { }
+        return 96;
     }
 }

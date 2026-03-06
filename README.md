@@ -5,7 +5,7 @@ A Windows 11 system-tray app that dynamically adjusts taskbar settings based on 
 ## Features
 
 - **Resolution profiles** — Define breakpoints that control taskbar alignment, button combining, and taskbar size
-- **System tray** — Runs silently in the notification area with a right-click context menu
+- **System tray** — Runs silently in the notification area; hover shows effective + native resolution with scaling %, right-click for options
 - **JSON config** — Edit `config.json` to customize profiles, thresholds, and poll interval
 - **Run at Startup** — Toggle auto-start from the tray menu (MSIX StartupTask or registry)
 - **No admin required** — All settings are under `HKCU`
@@ -37,7 +37,17 @@ dotnet build
 dotnet run --project TaskbarAlignmentTool
 ```
 
-The app starts in the system tray (notification area). Right-click the tray icon for options.
+The app starts in the system tray (notification area).
+
+- **Hover** the tray icon to see the active profile, effective resolution, native resolution, and scaling:
+  `Standard | 1920×1080 eff (2560×1440 @ 150%)`
+- **Right-click** the tray icon for the context menu:
+  - `Effective: 1920×1080` *(greyed)*
+  - `Native: 2560×1440 @ 150%` *(greyed)*
+  - ─
+  - `Profile: Standard` *(greyed)*
+  - ─
+  - Open Config, Reload Config, Run at Startup, Exit
 
 ## Publish (self-contained executable)
 
@@ -126,6 +136,11 @@ TaskbarAlignmentTool.Package/   # MSIX packaging project (for Microsoft Store)
 ├── Package.appxmanifest
 └── Images/                     # Store icon assets
 ```
+
+## Future Work
+
+- Per-icon system tray visibility control (show/hide overflow icons per profile)
+- Multi-monitor support (apply profiles per-monitor, not just primary)
 
 ## License
 

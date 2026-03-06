@@ -3,6 +3,17 @@ using Microsoft.Win32;
 namespace TaskbarAlignmentTool;
 
 /// <summary>
+/// Snapshot of the primary display's resolution and scaling state.
+/// Recomputed on each poll cycle — not persisted.
+/// </summary>
+internal sealed record DisplayInfo(
+    int EffectiveWidth,
+    int EffectiveHeight,
+    int NativeWidth,
+    int NativeHeight,
+    int ScalingPercent);
+
+/// <summary>
 /// Monitors the primary display's effective resolution using Windows messages
 /// (WM_DISPLAYCHANGE, WM_DPICHANGED) and a low-frequency fallback timer.
 /// </summary>
@@ -11,16 +22,21 @@ internal sealed class DisplayMonitor : IDisposable
     private readonly System.Windows.Forms.Timer _fallbackTimer;
     private readonly DisplayChangeWindow _messageWindow;
     private int _lastWidth;
+    private DisplayInfo _lastDisplayInfo;
     private ResolutionMode _resolutionMode;
 
     public int EffectiveWidth => GetWidth(_resolutionMode);
 
+    public DisplayInfo CurrentDisplayInfo => GetDisplayInfo(_resolutionMode);
+
     public event EventHandler<int>? ResolutionChanged;
+    public event EventHandler<DisplayInfo>? DisplayInfoChanged;
 
     public DisplayMonitor(int fallbackIntervalMs = 60000, ResolutionMode resolutionMode = ResolutionMode.Effective)
     {
         _resolutionMode = resolutionMode;
         _lastWidth = EffectiveWidth;
+        _lastDisplayInfo = CurrentDisplayInfo;
 
         // Hidden window to receive WM_DISPLAYCHANGE and WM_DPICHANGED
         _messageWindow = new DisplayChangeWindow(OnDisplayMessage);
@@ -63,10 +79,13 @@ internal sealed class DisplayMonitor : IDisposable
     private void CheckAndNotify()
     {
         var current = EffectiveWidth;
-        if (current != _lastWidth)
+        var currentInfo = CurrentDisplayInfo;
+        if (current != _lastWidth || currentInfo != _lastDisplayInfo)
         {
             _lastWidth = current;
+            _lastDisplayInfo = currentInfo;
             ResolutionChanged?.Invoke(this, current);
+            DisplayInfoChanged?.Invoke(this, currentInfo);
         }
     }
 
@@ -74,10 +93,13 @@ internal sealed class DisplayMonitor : IDisposable
     public void Refresh(bool force = false)
     {
         var current = EffectiveWidth;
-        if (force || current != _lastWidth)
+        var currentInfo = CurrentDisplayInfo;
+        if (force || current != _lastWidth || currentInfo != _lastDisplayInfo)
         {
             _lastWidth = current;
+            _lastDisplayInfo = currentInfo;
             ResolutionChanged?.Invoke(this, current);
+            DisplayInfoChanged?.Invoke(this, currentInfo);
         }
     }
 
@@ -107,6 +129,39 @@ internal sealed class DisplayMonitor : IDisposable
         }
 
         return physicalWidth;
+    }
+
+    private static DisplayInfo GetDisplayInfo(ResolutionMode mode)
+    {
+        var screen = Screen.PrimaryScreen;
+        if (screen == null)
+            return new DisplayInfo(0, 0, 0, 0, 100);
+
+        int nativeWidth = screen.Bounds.Width;
+        int nativeHeight = screen.Bounds.Height;
+
+        if (mode == ResolutionMode.Physical)
+            return new DisplayInfo(nativeWidth, nativeHeight, nativeWidth, nativeHeight, 100);
+
+        try
+        {
+            var hMonitor = NativeMethods.MonitorFromPoint(0, NativeMethods.MONITOR_DEFAULTTOPRIMARY);
+            if (hMonitor != nint.Zero &&
+                NativeMethods.GetDpiForMonitor(hMonitor, NativeMethods.MDT_EFFECTIVE_DPI, out uint dpiX, out uint dpiY) == 0 &&
+                dpiX > 0 && dpiY > 0)
+            {
+                int effectiveWidth = (int)Math.Round(nativeWidth * 96.0 / dpiX);
+                int effectiveHeight = (int)Math.Round(nativeHeight * 96.0 / dpiY);
+                int scalingPercent = (int)Math.Round(dpiX / 96.0 * 100);
+                return new DisplayInfo(effectiveWidth, effectiveHeight, nativeWidth, nativeHeight, scalingPercent);
+            }
+        }
+        catch
+        {
+            // Fall through to physical = effective
+        }
+
+        return new DisplayInfo(nativeWidth, nativeHeight, nativeWidth, nativeHeight, 100);
     }
 
     public void Dispose()

@@ -9,10 +9,8 @@ internal static class TaskbarAligner
 {
     private const string RegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced";
 
-    // Windows 11 23H2+ (Build 22631+) inverted the TaskbarGlomLevel values:
-    //   Old: 0=Always, 1=WhenFull, 2=Never
-    //   New: 0=Never, 1=WhenFull, 2=Always
-    private static readonly bool _invertCombine = Environment.OSVersion.Version.Build >= 22631;
+    // TaskbarGlomLevel registry values: 0=Always, 1=WhenFull, 2=Never
+    // These match the CombineButtonsOption enum directly across all Windows 11 versions.
 
     /// <summary>
     /// Applies all settings from a profile to the registry and notifies Explorer.
@@ -26,32 +24,13 @@ internal static class TaskbarAligner
 
         bool changed = false;
         changed |= SetIfDifferent(key, "TaskbarAl", (int)profile.Alignment);
-        changed |= SetIfDifferent(key, "TaskbarGlomLevel", MapCombineValue(profile.CombineButtons));
+        changed |= SetIfDifferent(key, "TaskbarGlomLevel", (int)profile.CombineButtons);
         changed |= SetIfDifferent(key, "TaskbarSi", (int)profile.TaskbarSize);
 
         if (changed)
             NotifyExplorer();
 
         return changed;
-    }
-
-    /// <summary>
-    /// Maps the logical CombineButtons value to the correct registry value,
-    /// accounting for the inverted mapping on Windows 11 23H2+.
-    /// </summary>
-    private static int MapCombineValue(CombineButtonsOption option)
-    {
-        if (!_invertCombine)
-            return (int)option; // Old mapping: Always=0, WhenFull=1, Never=2
-
-        // New mapping (23H2+): Never=0, WhenFull=1, Always=2
-        return option switch
-        {
-            CombineButtonsOption.Always => 2,
-            CombineButtonsOption.WhenFull => 1,
-            CombineButtonsOption.Never => 0,
-            _ => (int)option
-        };
     }
 
     private static bool SetIfDifferent(RegistryKey key, string valueName, int desired)

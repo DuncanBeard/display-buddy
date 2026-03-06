@@ -39,6 +39,7 @@ public sealed class AppConfig
 
     public int RefreshIntervalMs { get; set; } = 60000;
     public bool ShowNotifications { get; set; } = true;
+    public int NotificationDurationMs { get; set; } = 1000;
     public ResolutionMode ResolutionMode { get; set; } = ResolutionMode.Effective;
     public List<ProfileConfig> Profiles { get; set; } = [];
 
@@ -54,6 +55,7 @@ public sealed class AppConfig
     {
         RefreshIntervalMs = 60000,
         ShowNotifications = true,
+        NotificationDurationMs = 1000,
         ResolutionMode = ResolutionMode.Effective,
         Profiles =
         [
