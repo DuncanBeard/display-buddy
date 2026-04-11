@@ -64,8 +64,8 @@ public sealed class AppConfig
                 Name = "Compact",
                 MinWidth = 0,
                 Alignment = AlignmentOption.Left,
-                CombineButtons = CombineButtonsOption.Never,
-                TaskbarSize = TaskbarSizeOption.Small
+                CombineButtons = CombineButtonsOption.Always,
+                TaskbarSize = TaskbarSizeOption.Default
             },
             new ProfileConfig
             {
@@ -77,10 +77,18 @@ public sealed class AppConfig
             },
             new ProfileConfig
             {
-                Name = "Ultrawide",
+                Name = "Wide",
                 MinWidth = 2560,
+                Alignment = AlignmentOption.Left,
+                CombineButtons = CombineButtonsOption.Never,
+                TaskbarSize = TaskbarSizeOption.Default
+            },
+            new ProfileConfig
+            {
+                Name = "Ultrawide",
+                MinWidth = 3840,
                 Alignment = AlignmentOption.Center,
-                CombineButtons = CombineButtonsOption.Always,
+                CombineButtons = CombineButtonsOption.Never,
                 TaskbarSize = TaskbarSizeOption.Default
             }
         ]
