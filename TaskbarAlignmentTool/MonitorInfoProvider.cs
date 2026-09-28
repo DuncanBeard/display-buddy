@@ -3,25 +3,10 @@ using System.Runtime.InteropServices;
 namespace TaskbarAlignmentTool;
 
 /// <summary>
-/// Snapshot of a connected monitor's display properties.
-/// Rebuilt on each context menu open — not persisted.
-/// </summary>
-internal sealed record MonitorDisplayInfo(
-    string FriendlyName,
-    bool IsPrimary,
-    int EffectiveWidth,
-    int EffectiveHeight,
-    int NativeWidth,
-    int NativeHeight,
-    int ScalingPercent,
-    uint BitsPerChannel,
-    string HdrStatus,
-    double RefreshRateHz,
-    string VrrStatus);
-
-/// <summary>
 /// Enumerates all connected monitors and their display properties in a single
 /// pass using the CCD (Connecting and Configuring Displays) API family.
+/// Produces enriched <see cref="MonitorInfo"/> records — DPI math is delegated
+/// to <see cref="MonitorInfo.Compute"/>.
 /// </summary>
 internal static class MonitorInfoProvider
 {
@@ -33,12 +18,12 @@ internal static class MonitorInfoProvider
     /// Primary monitor is first, remaining sorted by Windows display number.
     /// Returns an empty list if enumeration fails.
     /// </summary>
-    public static List<MonitorDisplayInfo> GetAllMonitors()
+    public static List<MonitorInfo> GetAllMonitors()
     {
         try
         {
             var (paths, _) = GetActiveDisplayConfig();
-            var entries = new List<(string gdiName, MonitorDisplayInfo info)>();
+            var entries = new List<(string gdiName, MonitorInfo info)>();
             var seenTargets = new HashSet<(uint low, int high, uint id)>();
 
             foreach (var path in paths)
@@ -53,12 +38,15 @@ internal static class MonitorInfoProvider
                 var (bitsPerChannel, hdrStatus) = GetColorAndHdrInfo(path.targetInfo.adapterId, path.targetInfo.id);
                 var refreshRate = GetRefreshRate(path);
                 var vrrStatus = GetVrrStatus(path.targetInfo.adapterId, path.targetInfo.id);
-                var (effW, effH, natW, natH, scalePct) = GetResolutionAndScaling(gdiDeviceName);
+                var resolution = GetResolutionAndScaling(gdiDeviceName, isPrimary, friendlyName);
 
-                entries.Add((gdiDeviceName, new MonitorDisplayInfo(
-                    friendlyName, isPrimary,
-                    effW, effH, natW, natH, scalePct,
-                    bitsPerChannel, hdrStatus, refreshRate, vrrStatus)));
+                entries.Add((gdiDeviceName, resolution with
+                {
+                    BitsPerChannel = bitsPerChannel,
+                    HdrStatus = hdrStatus,
+                    RefreshRateHz = refreshRate,
+                    VrrStatus = vrrStatus
+                }));
             }
 
             // Sort: primary first, then by Windows display number
@@ -70,7 +58,7 @@ internal static class MonitorInfoProvider
             });
 
             // Assign fallback "Display N" names where EDID name is unavailable
-            var result = new List<MonitorDisplayInfo>(entries.Count);
+            var result = new List<MonitorInfo>(entries.Count);
             foreach (var (gdiName, info) in entries)
             {
                 if (info.FriendlyName == "Unknown Display")
@@ -210,13 +198,12 @@ internal static class MonitorInfoProvider
         return info.IsSpecializationEnabled ? "On" : "Off";
     }
 
-    private static (int effectiveWidth, int effectiveHeight, int nativeWidth, int nativeHeight, int scalingPercent)
-        GetResolutionAndScaling(string gdiDeviceName)
+    private static MonitorInfo GetResolutionAndScaling(string gdiDeviceName, bool isPrimary, string friendlyName)
     {
         var screen = Screen.AllScreens.FirstOrDefault(s =>
             string.Equals(s.DeviceName, gdiDeviceName, StringComparison.OrdinalIgnoreCase));
         if (screen == null)
-            return (0, 0, 0, 0, 100);
+            return MonitorInfo.Compute(0, 0, 0, 0, isPrimary, friendlyName);
 
         int nativeWidth = screen.Bounds.Width;
         int nativeHeight = screen.Bounds.Height;
@@ -228,21 +215,17 @@ internal static class MonitorInfoProvider
             var hMonitor = NativeMethods.MonitorFromPoint(packedPoint, NativeMethods.MONITOR_DEFAULTTONEAREST);
 
             if (hMonitor != nint.Zero &&
-                NativeMethods.GetDpiForMonitor(hMonitor, NativeMethods.MDT_EFFECTIVE_DPI, out uint dpiX, out uint dpiY) == 0 &&
-                dpiX > 0 && dpiY > 0)
+                NativeMethods.GetDpiForMonitor(hMonitor, NativeMethods.MDT_EFFECTIVE_DPI, out uint dpiX, out uint dpiY) == 0)
             {
-                int effectiveWidth = (int)Math.Round(nativeWidth * 96.0 / dpiX);
-                int effectiveHeight = (int)Math.Round(nativeHeight * 96.0 / dpiY);
-                int scalingPercent = (int)Math.Round(dpiX / 96.0 * 100);
-                return (effectiveWidth, effectiveHeight, nativeWidth, nativeHeight, scalingPercent);
+                return MonitorInfo.Compute(nativeWidth, nativeHeight, dpiX, dpiY, isPrimary, friendlyName);
             }
         }
         catch
         {
-            // Fall through to physical = effective
+            // Fall through to unscaled fallback
         }
 
-        return (nativeWidth, nativeHeight, nativeWidth, nativeHeight, 100);
+        return MonitorInfo.Compute(nativeWidth, nativeHeight, 0, 0, isPrimary, friendlyName);
     }
 
     private static int GetDisplayNumber(string gdiDeviceName)

@@ -123,10 +123,14 @@ The app writes to `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advan
 
 ```
 TaskbarAlignmentTool/
-├── Program.cs                  # Entry point
-├── TrayApplicationContext.cs   # System tray icon and context menu
-├── DisplayMonitor.cs           # Polls primary display effective resolution
-├── TaskbarAligner.cs           # Writes registry keys, notifies Explorer
+├── Program.cs                  # Entry point + single-instance mutex
+├── TrayApplicationContext.cs   # System tray icon, context menu, monitor → aligner wiring
+├── DisplayMonitor.cs           # Watches primary display for resolution / DPI changes
+├── MonitorInfo.cs              # Canonical MonitorInfo record + DPI-scaling factory
+├── MonitorInfoProvider.cs      # Enumerates all monitors via the Windows CCD API
+├── TaskbarAligner.cs           # Writes taskbar registry keys, notifies Explorer
+├── TrayIconRenderer.cs         # Renders the live-width tray icon, owns HICON lifecycle
+├── RunAtStartup.cs             # IRunAtStartup interface + MSIX / registry adapters
 ├── AppConfig.cs                # JSON config model, load/save, profile matching
 ├── NativeMethods.cs            # P/Invoke declarations
 ├── app.manifest                # Execution level manifest
@@ -136,6 +140,12 @@ TaskbarAlignmentTool.Package/   # MSIX packaging project (for Microsoft Store)
 ├── Package.appxmanifest
 └── Images/                     # Store icon assets
 ```
+
+## Project Documentation
+
+- **`CONTEXT.md`** — domain glossary (Monitor, Primary Display, MonitorInfo, Profile, Profile Switch, Tray Icon, Run at Startup) and how the modules relate.
+- **`docs/adr/`** — architectural decision records for non-obvious choices that future readers might re-suggest "fixing." Read these before refactoring the modules they cover.
+- **`.specify/memory/constitution.md`** — the project constitution (five principles: Lightweight, Self-Contained, Pragmatic Code, Startup-Ready, Store-Distributable).
 
 ## Future Work
 

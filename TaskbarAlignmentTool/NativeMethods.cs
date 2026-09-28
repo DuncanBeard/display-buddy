@@ -46,6 +46,10 @@ internal static partial class NativeMethods
     [LibraryImport("user32.dll")]
     public static partial nint MonitorFromPoint(long pt, uint dwFlags);
 
+    [LibraryImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static partial bool DestroyIcon(nint hIcon);
+
     public const uint MONITOR_DEFAULTTOPRIMARY = 0x00000001;
     public const uint MONITOR_DEFAULTTONEAREST = 0x00000002;
 

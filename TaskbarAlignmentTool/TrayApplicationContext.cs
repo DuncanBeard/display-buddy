@@ -1,5 +1,4 @@
 using System.Diagnostics;
-using Microsoft.Win32;
 
 namespace TaskbarAlignmentTool;
 
@@ -9,16 +8,13 @@ namespace TaskbarAlignmentTool;
 /// </summary>
 internal sealed class TrayApplicationContext : ApplicationContext
 {
-    private const string StartupRegistryPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string StartupValueName = "TaskbarAlignmentTool";
-
     private AppConfig _config;
     private readonly DisplayMonitor _monitor;
     private readonly NotifyIcon _notifyIcon;
+    private readonly TrayIconRenderer _iconRenderer;
+    private readonly IRunAtStartup _runAtStartup;
     private readonly ToolStripSeparator _monitorSectionEnd;
     private readonly ToolStripMenuItem _startupItem;
-
-    private static readonly Lazy<bool> _isMsixPackaged = new(DetectMsixPackaged);
 
     private int _profileSwitchCount;
 
@@ -26,11 +22,13 @@ internal sealed class TrayApplicationContext : ApplicationContext
     {
         _config = config;
         _monitor = new DisplayMonitor(config.RefreshIntervalMs, config.ResolutionMode);
+        _iconRenderer = new TrayIconRenderer();
+        _runAtStartup = RunAtStartup.Create();
 
         _monitorSectionEnd = new ToolStripSeparator();
         _startupItem = new ToolStripMenuItem("Run at Startup", null, OnToggleStartup)
         {
-            Checked = IsStartupEnabled()
+            Checked = _runAtStartup.IsEnabled
         };
 
         var menu = new ContextMenuStrip();
@@ -49,19 +47,19 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
         _notifyIcon = new NotifyIcon
         {
-            Icon = RenderTrayIcon(0),
             ContextMenuStrip = menu,
             Text = "Taskbar Alignment Tool",
             Visible = true
         };
+        _iconRenderer.UpdateIcon(_notifyIcon, 0);
 
-        _monitor.DisplayInfoChanged += OnDisplayInfoChanged;
+        _monitor.PrimaryDisplayChanged += OnPrimaryDisplayChanged;
 
         // Apply profile immediately on startup
-        ApplyForWidth(_monitor.EffectiveWidth);
+        ApplyForWidth(_monitor.PrimaryDisplay.EffectiveWidth);
     }
 
-    private void OnDisplayInfoChanged(object? sender, DisplayInfo info)
+    private void OnPrimaryDisplayChanged(object? sender, MonitorInfo info)
     {
         ApplyForWidth(info.EffectiveWidth);
     }
@@ -81,11 +79,11 @@ internal sealed class TrayApplicationContext : ApplicationContext
                     ToolTipIcon.Info);
             }
         }
-        var displayInfo = _monitor.CurrentDisplayInfo;
+        var displayInfo = _monitor.PrimaryDisplay;
         UpdateStatus(displayInfo, profile);
     }
 
-    private void UpdateStatus(DisplayInfo info, ProfileConfig? profile)
+    private void UpdateStatus(MonitorInfo info, ProfileConfig? profile)
     {
         var profileName = profile?.Name ?? "None";
         bool unavailable = info.EffectiveWidth == 0 && info.EffectiveHeight == 0;
@@ -110,10 +108,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
         _notifyIcon.Text = tooltip;
 
-        // Update tray icon with current width
-        var oldIcon = _notifyIcon.Icon;
-        _notifyIcon.Icon = RenderTrayIcon(info.EffectiveWidth);
-        oldIcon?.Dispose();
+        _iconRenderer.UpdateIcon(_notifyIcon, info.EffectiveWidth);
     }
 
     private void OnMenuOpening(object? sender, System.ComponentModel.CancelEventArgs e)
@@ -130,7 +125,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
 
         var monitors = MonitorInfoProvider.GetAllMonitors();
-        var profile = _config.ResolveProfile(_monitor.EffectiveWidth);
+        var profile = _config.ResolveProfile(_monitor.PrimaryDisplay.EffectiveWidth);
 
         if (monitors.Count == 0)
         {
@@ -149,7 +144,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         }
     }
 
-    private static List<ToolStripItem> BuildMonitorMenuItems(MonitorDisplayInfo monitor, ProfileConfig? profile)
+    private static List<ToolStripItem> BuildMonitorMenuItems(MonitorInfo monitor, ProfileConfig? profile)
     {
         var items = new List<ToolStripItem>();
 
@@ -218,82 +213,12 @@ internal sealed class TrayApplicationContext : ApplicationContext
 
     private void OnToggleStartup(object? sender, EventArgs e)
     {
-        if (IsStartupEnabled())
-            DisableStartup();
+        if (_runAtStartup.IsEnabled)
+            _runAtStartup.Disable();
         else
-            EnableStartup();
+            _runAtStartup.Enable();
 
-        _startupItem.Checked = IsStartupEnabled();
-    }
-
-    private static bool IsMsixPackaged() => _isMsixPackaged.Value;
-
-    private static bool DetectMsixPackaged()
-    {
-        try
-        {
-            // Windows.ApplicationModel.Package.Current throws if not packaged
-            _ = Windows.ApplicationModel.Package.Current.Id;
-            return true;
-        }
-        catch
-        {
-            return false;
-        }
-    }
-
-    private static bool IsStartupEnabled()
-    {
-        if (IsMsixPackaged())
-        {
-            try
-            {
-                var task = Windows.ApplicationModel.StartupTask
-                    .GetAsync("TaskbarAlignmentToolStartup").GetAwaiter().GetResult();
-                return task.State == Windows.ApplicationModel.StartupTaskState.Enabled;
-            }
-            catch { return false; }
-        }
-
-        using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryPath, false);
-        return key?.GetValue(StartupValueName) != null;
-    }
-
-    private static void EnableStartup()
-    {
-        if (IsMsixPackaged())
-        {
-            try
-            {
-                var task = Windows.ApplicationModel.StartupTask
-                    .GetAsync("TaskbarAlignmentToolStartup").GetAwaiter().GetResult();
-                task.RequestEnableAsync().GetAwaiter().GetResult();
-            }
-            catch { /* Startup task not available */ }
-            return;
-        }
-
-        using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryPath, true);
-        var exePath = Application.ExecutablePath;
-        key?.SetValue(StartupValueName, $"\"{exePath}\"");
-    }
-
-    private static void DisableStartup()
-    {
-        if (IsMsixPackaged())
-        {
-            try
-            {
-                var task = Windows.ApplicationModel.StartupTask
-                    .GetAsync("TaskbarAlignmentToolStartup").GetAwaiter().GetResult();
-                task.Disable();
-            }
-            catch { /* Startup task not available */ }
-            return;
-        }
-
-        using var key = Registry.CurrentUser.OpenSubKey(StartupRegistryPath, true);
-        key?.DeleteValue(StartupValueName, false);
+        _startupItem.Checked = _runAtStartup.IsEnabled;
     }
 
     private ToolStripMenuItem CreateDiagnosticsMenu()
@@ -317,83 +242,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
         _notifyIcon.Visible = false;
         _monitor.Dispose();
         _notifyIcon.Dispose();
+        _iconRenderer.Dispose();
         Application.Exit();
-    }
-
-    /// <summary>
-    /// Renders a DPI-aware tray icon showing the current display width.
-    /// Auto-detects Windows light/dark theme for contrast.
-    /// </summary>
-    private static Icon RenderTrayIcon(int width)
-    {
-        int dpi = GetSystemDpi();
-        int size = (int)(16 * dpi / 96.0);
-        float scale = size / 16f;
-        bool isDarkTheme = IsSystemDarkTheme();
-
-        using var bmp = new Bitmap(size, size);
-        using var g = Graphics.FromImage(bmp);
-        g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
-        g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
-        g.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-        g.Clear(Color.Transparent);
-
-        // Background color adapts to theme
-        var bgColor = isDarkTheme
-            ? Color.FromArgb(255, 0, 150, 180)   // Teal on dark taskbar
-            : Color.FromArgb(255, 0, 120, 150);  // Darker teal on light taskbar
-        var textBrush = isDarkTheme ? Brushes.White : Brushes.White;
-
-        using var bgBrush = new SolidBrush(bgColor);
-        g.FillRectangle(bgBrush, 0, 0, size, size);
-
-        // Display width as the full icon content
-        var label = width.ToString();
-        float fontSize = label.Length <= 3 ? 7f : label.Length == 4 ? 5.5f : 4.5f;
-        using var font = new Font("Segoe UI", fontSize * scale, FontStyle.Bold, GraphicsUnit.Pixel);
-        var sf = new StringFormat
-        {
-            Alignment = StringAlignment.Center,
-            LineAlignment = StringAlignment.Center
-        };
-        var textRect = new RectangleF(0, 0, size, size);
-        g.DrawString(label, font, textBrush, textRect, sf);
-
-        return Icon.FromHandle(bmp.GetHicon());
-    }
-
-    /// <summary>
-    /// Checks if Windows is using dark mode for apps.
-    /// Registry: HKCU\Software\Microsoft\Windows\CurrentVersion\Themes\Personalize\SystemUsesLightTheme
-    /// 0 = dark, 1 = light
-    /// </summary>
-    private static bool IsSystemDarkTheme()
-    {
-        try
-        {
-            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(
-                @"Software\Microsoft\Windows\CurrentVersion\Themes\Personalize", false);
-            var value = key?.GetValue("SystemUsesLightTheme");
-            if (value is int intVal)
-                return intVal == 0;
-        }
-        catch { }
-        return true; // Default to dark
-    }
-
-    private static int GetSystemDpi()
-    {
-        try
-        {
-            var hMonitor = NativeMethods.MonitorFromPoint(0, NativeMethods.MONITOR_DEFAULTTOPRIMARY);
-            if (hMonitor != nint.Zero &&
-                NativeMethods.GetDpiForMonitor(hMonitor, NativeMethods.MDT_EFFECTIVE_DPI, out uint dpiX, out _) == 0 &&
-                dpiX > 0)
-            {
-                return (int)dpiX;
-            }
-        }
-        catch { }
-        return 96;
     }
 }
