@@ -32,7 +32,7 @@
     <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
     <DefaultLanguage>en-US</DefaultLanguage>
     <AppxPackageSigningEnabled>true</AppxPackageSigningEnabled>
-    <EntryPointProjectUniqueName>..\TaskbarAlignmentTool\TaskbarAlignmentTool.csproj</EntryPointProjectUniqueName>
+    <EntryPointProjectUniqueName>..\TaskBard\TaskBard.csproj</EntryPointProjectUniqueName>
   </PropertyGroup>
   <ItemGroup>
     <AppxManifest Include="Package.appxmanifest">
@@ -43,7 +43,7 @@
     <Content Include="Images\*.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\TaskbarAlignmentTool\TaskbarAlignmentTool.csproj" />
+    <ProjectReference Include="..\TaskBard\TaskBard.csproj" />
   </ItemGroup>
   <Import Project="$(WapProjPath)\Microsoft.DesktopBridge.targets" />
 </Project>

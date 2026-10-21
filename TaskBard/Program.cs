@@ -1,8 +1,8 @@
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 static class Program
 {
-    private const string MutexName = "Global\\TaskbarAlignmentTool_SingleInstance";
+    private const string MutexName = "Global\\TaskBard_SingleInstance";
 
     [STAThread]
     static void Main()

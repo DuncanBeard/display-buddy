@@ -1,8 +1,8 @@
 {
   "$schema": "https://json-schema.org/draft-07/schema#",
-  "$id": "https://raw.githubusercontent.com/duncanbeard/taskbar-alignment-tool/main/schema/config.schema.json",
-  "title": "Taskbar Alignment Tool Configuration",
-  "description": "Configuration file for the Taskbar Alignment Tool. Controls resolution-based taskbar profile switching.",
+  "$id": "https://raw.githubusercontent.com/DuncanBeard/taskbard/main/schema/config.schema.json",
+  "title": "TaskBard Configuration",
+  "description": "Configuration file for TaskBard. Controls resolution-based taskbar profile switching.",
   "type": "object",
   "properties": {
     "$schema": {

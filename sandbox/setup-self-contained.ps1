@@ -5,7 +5,7 @@
 Start-Sleep -Seconds 2
 
 # Copy default config to the app's expected location
-$configDir = "$env:LOCALAPPDATA\TaskbarAlignmentTool"
+$configDir = "$env:LOCALAPPDATA\TaskBard"
 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 try {
     Copy-Item "C:\Users\Public\Sandbox\config.json" "$configDir\config.json" -Force
@@ -17,7 +17,7 @@ try {
 Start-Process notepad.exe "$configDir\config.json"
 
 # Launch the app
-Start-Process "C:\Users\Public\TaskbarAlignmentTool\win-x64-self-contained\TaskbarAlignmentTool.exe"
+Start-Process "C:\Users\Public\TaskBard\TaskBard-win-x64-self-contained\TaskBard.exe"
 
 # Open some windows to populate the taskbar
 Start-Process explorer.exe "C:\"
@@ -27,6 +27,6 @@ Start-Process msedge.exe "https://www.bing.com" -ErrorAction SilentlyContinue
 Start-Process msedge.exe "https://learn.microsoft.com" -ErrorAction SilentlyContinue
 
 # Keep the PowerShell window open so you can see any errors
-Write-Host "`nTaskbar Alignment Tool launched. Check the system tray." -ForegroundColor Green
+Write-Host "`nTaskBard launched. Check the system tray." -ForegroundColor Green
 Write-Host "Press any key to close this window..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

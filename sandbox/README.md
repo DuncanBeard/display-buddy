@@ -1,13 +1,13 @@
 # Windows Sandbox Test Environment
 
-Two `.wsb` files for testing the Taskbar Alignment Tool in a clean Windows Sandbox.
+Two `.wsb` files for testing TaskBard in a clean Windows Sandbox.
 
 ## Prerequisites
 - Windows Sandbox must be enabled: `Enable-WindowsOptionalFeature -Online -FeatureName Containers-DisposableClientVM`
 - Build the publish outputs first:
   ```powershell
-  dotnet publish TaskbarAlignmentTool -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish\win-x64-self-contained
-  dotnet publish TaskbarAlignmentTool -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -o publish\win-x64-framework-dependent
+  dotnet publish TaskBard -c Release -r win-x64 --self-contained -p:PublishSingleFile=true -o publish\TaskBard-win-x64-self-contained
+  dotnet publish TaskBard -c Release -r win-x64 --no-self-contained -p:PublishSingleFile=true -o publish\TaskBard-win-x64-framework-dependent
   ```
 
 ## Test Configs

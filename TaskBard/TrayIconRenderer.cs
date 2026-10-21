@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Renders and owns the lifecycle of the system-tray icon. The icon shows

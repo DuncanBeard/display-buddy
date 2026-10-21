@@ -1,12 +1,12 @@
 <Configuration>
   <MappedFolders>
     <MappedFolder>
-      <HostFolder>C:\Users\duncanbeard\Personal\taskbar-alignment-tool\publish</HostFolder>
-      <SandboxFolder>C:\Users\Public\TaskbarAlignmentTool</SandboxFolder>
+      <HostFolder>C:\Users\duncanbeard\Personal\taskbard\publish</HostFolder>
+      <SandboxFolder>C:\Users\Public\TaskBard</SandboxFolder>
       <ReadOnly>true</ReadOnly>
     </MappedFolder>
     <MappedFolder>
-      <HostFolder>C:\Users\duncanbeard\Personal\taskbar-alignment-tool\sandbox</HostFolder>
+      <HostFolder>C:\Users\duncanbeard\Personal\taskbard\sandbox</HostFolder>
       <SandboxFolder>C:\Users\Public\Sandbox</SandboxFolder>
       <ReadOnly>true</ReadOnly>
     </MappedFolder>

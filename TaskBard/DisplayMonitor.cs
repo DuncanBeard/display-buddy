@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Watches the primary display for resolution / DPI changes via Windows
@@ -92,7 +92,7 @@ internal sealed class DisplayMonitor : IDisposable
             _onChange = onChange;
             var cp = new CreateParams
             {
-                Caption = "TaskbarAlignmentTool_DisplayMonitor",
+                Caption = "TaskBard_DisplayMonitor",
                 // Message-only window (HWND_MESSAGE parent)
                 Parent = new nint(-3)
             };

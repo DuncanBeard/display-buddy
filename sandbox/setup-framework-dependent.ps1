@@ -5,7 +5,7 @@
 Start-Sleep -Seconds 2
 
 $installerPath = "$env:TEMP\dotnet-desktop-runtime.exe"
-$appPath = "C:\Users\Public\TaskbarAlignmentTool\win-x64-framework-dependent\TaskbarAlignmentTool.exe"
+$appPath = "C:\Users\Public\TaskBard\TaskBard-win-x64-framework-dependent\TaskBard.exe"
 
 Write-Host "Downloading .NET 8 Desktop Runtime..." -ForegroundColor Cyan
 try {
@@ -21,7 +21,7 @@ Write-Host "Installing .NET 8 Desktop Runtime..." -ForegroundColor Cyan
 Start-Process -FilePath $installerPath -ArgumentList "/install", "/quiet", "/norestart" -Wait
 
 # Copy default config to the app's expected location
-$configDir = "$env:LOCALAPPDATA\TaskbarAlignmentTool"
+$configDir = "$env:LOCALAPPDATA\TaskBard"
 New-Item -ItemType Directory -Path $configDir -Force | Out-Null
 try {
     Copy-Item "C:\Users\Public\Sandbox\config.json" "$configDir\config.json" -Force
@@ -32,7 +32,7 @@ try {
 # Open config in Notepad for easy editing during testing
 Start-Process notepad.exe "$configDir\config.json"
 
-Write-Host "Launching TaskbarAlignmentTool..." -ForegroundColor Green
+Write-Host "Launching TaskBard..." -ForegroundColor Green
 Start-Process -FilePath $appPath
 
 # Open some windows to populate the taskbar
@@ -42,6 +42,6 @@ Start-Process notepad.exe
 Start-Process msedge.exe "https://www.bing.com" -ErrorAction SilentlyContinue
 Start-Process msedge.exe "https://learn.microsoft.com" -ErrorAction SilentlyContinue
 
-Write-Host "`nTaskbar Alignment Tool launched. Check the system tray." -ForegroundColor Green
+Write-Host "`nTaskBard launched. Check the system tray." -ForegroundColor Green
 Write-Host "Press any key to close this window..."
 $null = $Host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")

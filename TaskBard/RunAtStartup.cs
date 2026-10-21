@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Toggle for "launch this app on user login." Two adapters live behind this
@@ -55,7 +55,7 @@ internal static class RunAtStartup
 /// </summary>
 internal sealed class MsixRunAtStartup : IRunAtStartup
 {
-    private const string TaskId = "TaskbarAlignmentToolStartup";
+    private const string TaskId = "TaskBardStartup";
 
     public bool IsEnabled
     {
@@ -104,7 +104,7 @@ internal sealed class MsixRunAtStartup : IRunAtStartup
 internal sealed class RegistryRunAtStartup : IRunAtStartup
 {
     private const string RunKeyPath = @"Software\Microsoft\Windows\CurrentVersion\Run";
-    private const string ValueName = "TaskbarAlignmentTool";
+    private const string ValueName = "TaskBard";
 
     public bool IsEnabled
     {

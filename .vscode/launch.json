@@ -10,9 +10,9 @@
       "request": "launch",
       "preLaunchTask": "build",
       // If you have changed target frameworks, make sure to update the program path.
-      "program": "${workspaceFolder}/TaskbarAlignmentTool/bin/Debug/net8.0-windows10.0.19041.0/TaskbarAlignmentTool.dll",
+      "program": "${workspaceFolder}/TaskBard/bin/Debug/net8.0-windows10.0.19041.0/TaskBard.dll",
       "args": [],
-      "cwd": "${workspaceFolder}/TaskbarAlignmentTool",
+      "cwd": "${workspaceFolder}/TaskBard",
       // For more information about the 'console' field, see https://aka.ms/VSCode-CS-LaunchJson-Console
       "console": "internalConsole",
       "stopAtEntry": false

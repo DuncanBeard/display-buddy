@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 internal static partial class NativeMethods
 {

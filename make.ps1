@@ -1,6 +1,6 @@
 <#
 .SYNOPSIS
-    Task runner for TaskbarAlignmentTool.
+    Task runner for TaskBard.
 
 .DESCRIPTION
     Usage: .\make.ps1 <command>
@@ -29,8 +29,8 @@ param(
 
 $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
-$project = "$root\TaskbarAlignmentTool"
-$csproj = "$project\TaskbarAlignmentTool.csproj"
+$project = "$root\TaskBard"
+$csproj = "$project\TaskBard.csproj"
 
 function Invoke-Build {
     Write-Host "=== Build (Debug) ===" -ForegroundColor Cyan
@@ -43,16 +43,12 @@ function Invoke-Test {
     if ($LASTEXITCODE -ne 0) { throw "Build failed" }
 
     Write-Host "`n--- Smoke test: verify exe exists ---" -ForegroundColor Yellow
-    $exe = Get-ChildItem "$project\bin\Debug\*\TaskbarAlignmentTool.exe" -Recurse | Select-Object -First 1
+    $exe = Get-ChildItem "$project\bin\Debug\*\TaskBard.exe" -Recurse | Select-Object -First 1
     if (-not $exe) { throw "EXE not found after build" }
     Write-Host "  OK: $($exe.FullName) ($( '{0:N1} MB' -f ($exe.Length / 1MB) ))" -ForegroundColor Green
 
-    Write-Host "`n--- Smoke test: verify config serialization ---" -ForegroundColor Yellow
-    $configType = dotnet run --project $project -- --dry-run 2>&1
-    # The app doesn't support --dry-run, so it will start. We just verify it doesn't crash on launch.
-    # Instead, verify the DLL loads correctly:
-    Write-Host "  Checking assembly loads..." -ForegroundColor Yellow
-    $dll = Get-ChildItem "$project\bin\Debug\*\TaskbarAlignmentTool.dll" -Recurse | Select-Object -First 1
+    Write-Host "`n--- Smoke test: verify assembly exists ---" -ForegroundColor Yellow
+    $dll = Get-ChildItem "$project\bin\Debug\*\TaskBard.dll" -Recurse | Select-Object -First 1
     if (-not $dll) { throw "DLL not found" }
     Write-Host "  OK: Assembly present" -ForegroundColor Green
 
@@ -66,20 +62,20 @@ function Invoke-Publish {
 
     Write-Host "`n--- Framework-dependent ---" -ForegroundColor Yellow
     dotnet publish $project -c Release -r win-x64 --no-self-contained `
-        -p:PublishSingleFile=true -o "$root\publish\win-x64-framework-dependent"
+        -p:PublishSingleFile=true -o "$root\publish\TaskBard-win-x64-framework-dependent"
     if ($LASTEXITCODE -ne 0) { throw "Framework-dependent publish failed" }
 
     Write-Host "`n--- Self-contained ---" -ForegroundColor Yellow
     dotnet publish $project -c Release -r win-x64 --self-contained `
         -p:PublishSingleFile=true -p:IncludeNativeLibrariesForSelfExtract=true `
-        -o "$root\publish\win-x64-self-contained"
+        -o "$root\publish\TaskBard-win-x64-self-contained"
     if ($LASTEXITCODE -ne 0) { throw "Self-contained publish failed" }
 
     Write-Host "`n--- Creating zip archives ---" -ForegroundColor Yellow
-    Compress-Archive -Path "$root\publish\win-x64-framework-dependent\*" `
-        -DestinationPath "$root\publish\TaskbarAlignmentTool-win-x64.zip" -Force
-    Compress-Archive -Path "$root\publish\win-x64-self-contained\*" `
-        -DestinationPath "$root\publish\TaskbarAlignmentTool-win-x64-self-contained.zip" -Force
+    Compress-Archive -Path "$root\publish\TaskBard-win-x64-framework-dependent\*" `
+        -DestinationPath "$root\publish\TaskBard-win-x64.zip" -Force
+    Compress-Archive -Path "$root\publish\TaskBard-win-x64-self-contained\*" `
+        -DestinationPath "$root\publish\TaskBard-win-x64-self-contained.zip" -Force
 
     Write-Host "`n=== Publish complete ===" -ForegroundColor Green
     Get-ChildItem "$root\publish\*.zip" | ForEach-Object {
@@ -123,8 +119,8 @@ function Invoke-Clean {
 function Show-Help {
     Write-Host @"
 
-  TaskbarAlignmentTool Task Runner
-  ================================
+  TaskBard Task Runner
+  ====================
 
   Usage: .\make.ps1 <command>
 

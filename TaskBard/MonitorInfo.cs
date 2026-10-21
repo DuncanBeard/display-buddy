@@ -1,4 +1,4 @@
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Snapshot of a connected monitor's display properties. The single canonical

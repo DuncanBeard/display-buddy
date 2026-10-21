@@ -12,7 +12,7 @@
             ProcessorArchitecture="x64" />
 
   <Properties>
-    <DisplayName>Taskbar Alignment Tool</DisplayName>
+    <DisplayName>TaskBard</DisplayName>
     <PublisherDisplayName>REPLACE-WITH-YOUR-NAME</PublisherDisplayName>
     <Logo>Images\StoreLogo_50x50.png</Logo>
   </Properties>
@@ -27,10 +27,10 @@
 
   <Applications>
     <Application Id="App"
-                 Executable="TaskbarAlignmentTool\TaskbarAlignmentTool.exe"
+                 Executable="TaskBard\TaskBard.exe"
                  EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
-        DisplayName="Taskbar Alignment Tool"
+        DisplayName="TaskBard"
         Description="Dynamically adjusts Windows 11 taskbar alignment, button combining, and size based on your display resolution."
         BackgroundColor="#0096B4"
         Square150x150Logo="Images\StoreLogo_150x150.png"
@@ -43,11 +43,11 @@
       <Extensions>
         <!-- Auto-start with Windows (MSIX-recommended approach) -->
         <desktop:Extension Category="windows.startupTask"
-                           Executable="TaskbarAlignmentTool\TaskbarAlignmentTool.exe"
+                           Executable="TaskBard\TaskBard.exe"
                            EntryPoint="Windows.FullTrustApplication">
-          <desktop:StartupTask TaskId="TaskbarAlignmentToolStartup"
+          <desktop:StartupTask TaskId="TaskBardStartup"
                                Enabled="false"
-                               DisplayName="Taskbar Alignment Tool" />
+                               DisplayName="TaskBard" />
         </desktop:Extension>
       </Extensions>
     </Application>

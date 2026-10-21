@@ -1,7 +1,7 @@
 using System.Text.Json;
 using System.Text.Json.Serialization;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>Taskbar alignment options.</summary>
 [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -32,7 +32,7 @@ public sealed class ProfileConfig
 /// <summary>Root configuration model.</summary>
 public sealed class AppConfig
 {
-    private const string SchemaUrl = "https://raw.githubusercontent.com/duncanbeard/taskbar-alignment-tool/main/schema/config.schema.json";
+    private const string SchemaUrl = "https://raw.githubusercontent.com/DuncanBeard/taskbard/main/schema/config.schema.json";
 
     [JsonPropertyName("$schema")]
     public string Schema { get; set; } = SchemaUrl;
@@ -99,7 +99,7 @@ public sealed class AppConfig
     {
         var dir = Path.Combine(
             Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-            "TaskbarAlignmentTool");
+            "TaskBard");
         Directory.CreateDirectory(dir);
         return Path.Combine(dir, "config.json");
     }

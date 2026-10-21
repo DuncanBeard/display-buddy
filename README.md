@@ -1,6 +1,8 @@
-# Taskbar Alignment Tool
+# TaskBard
 
-A Windows 11 system-tray app that dynamically adjusts taskbar settings based on your primary display's effective resolution. When you dock/undock a laptop or change monitors, the taskbar automatically adapts.
+_Make your icons dance._
+
+TaskBard switches Windows 11 taskbar profiles based on your primary display. It runs in the system tray and adjusts taskbar alignment, button combining, and size to match your primary display's effective resolution. When you dock/undock a laptop or change monitors, the taskbar automatically adapts.
 
 ## Features
 
@@ -34,7 +36,7 @@ dotnet build
 ## Run
 
 ```powershell
-dotnet run --project TaskbarAlignmentTool
+dotnet run --project TaskBard
 ```
 
 The app starts in the system tray (notification area).
@@ -47,22 +49,24 @@ The app starts in the system tray (notification area).
   - ─
   - `Profile: Standard` *(greyed)*
   - ─
-  - Open Config, Reload Config, Run at Startup, Exit
+  - Open Config, Reload Config, Run at Startup, Exit TaskBard
 
 ## Publish (self-contained executable)
 
 ```powershell
-dotnet publish TaskbarAlignmentTool -c Release -r win-x64 --self-contained -o publish
+dotnet publish TaskBard -c Release -r win-x64 --self-contained -o publish
 ```
 
-This produces a standalone `publish\TaskbarAlignmentTool.exe` that doesn't require .NET to be installed.
+This produces a standalone `publish\TaskBard.exe` that doesn't require .NET to be installed.
+
+To build both release variants and their zips, run `.\make.ps1 publish`. It writes `publish\TaskBard-win-x64-framework-dependent\`, `publish\TaskBard-win-x64-self-contained\`, `publish\TaskBard-win-x64.zip` and `publish\TaskBard-win-x64-self-contained.zip`.
 
 ## Configuration
 
 On first run, a default `config.json` is created at:
 
 ```
-%LOCALAPPDATA%\TaskbarAlignmentTool\config.json
+%LOCALAPPDATA%\TaskBard\config.json
 ```
 
 You can also open it from the tray menu → **Open Config**.
@@ -122,7 +126,7 @@ The app writes to `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advan
 ## Project Structure
 
 ```
-TaskbarAlignmentTool/
+TaskBard/
 ├── Program.cs                  # Entry point + single-instance mutex
 ├── TrayApplicationContext.cs   # System tray icon, context menu, monitor → aligner wiring
 ├── DisplayMonitor.cs           # Watches primary display for resolution / DPI changes
@@ -136,7 +140,7 @@ TaskbarAlignmentTool/
 ├── app.manifest                # Execution level manifest
 └── icon.ico                    # Tray icon
 
-TaskbarAlignmentTool.Package/   # MSIX packaging project (for Microsoft Store)
+TaskBard.Package/               # MSIX packaging project (for Microsoft Store)
 ├── Package.appxmanifest
 └── Images/                     # Store icon assets
 ```

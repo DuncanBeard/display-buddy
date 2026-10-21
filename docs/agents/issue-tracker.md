@@ -1,6 +1,6 @@
 # Issue tracker: GitHub
 
-Issues and PRDs for this repo live as GitHub issues at `DuncanBeard/display-buddy`. Use the `gh` CLI for all operations.
+Issues and PRDs for this repo live as GitHub issues at `DuncanBeard/taskbard`. Use the `gh` CLI for all operations.
 
 ## Conventions
 

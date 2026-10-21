@@ -1,6 +1,6 @@
 using Microsoft.Win32;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Reads and writes Windows 11 taskbar registry keys and notifies Explorer of changes.

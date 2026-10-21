@@ -7,7 +7,7 @@
       "type": "process",
       "args": [
         "build",
-        "${workspaceFolder}/TaskbarAlignmentTool/TaskbarAlignmentTool.csproj",
+        "${workspaceFolder}/TaskBard/TaskBard.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
@@ -19,7 +19,7 @@
       "type": "process",
       "args": [
         "publish",
-        "${workspaceFolder}/TaskbarAlignmentTool/TaskbarAlignmentTool.csproj",
+        "${workspaceFolder}/TaskBard/TaskBard.csproj",
         "/property:GenerateFullPaths=true",
         "/consoleloggerparameters:NoSummary;ForceNoAlign"
       ],
@@ -33,7 +33,7 @@
         "watch",
         "run",
         "--project",
-        "${workspaceFolder}/TaskbarAlignmentTool/TaskbarAlignmentTool.csproj"
+        "${workspaceFolder}/TaskBard/TaskBard.csproj"
       ],
       "problemMatcher": "$msCompile"
     }

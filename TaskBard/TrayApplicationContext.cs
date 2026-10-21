@@ -1,6 +1,6 @@
 using System.Diagnostics;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Application context that manages the system-tray icon, context menu,
@@ -41,14 +41,14 @@ internal sealed class TrayApplicationContext : ApplicationContext
         menu.Items.Add(new ToolStripSeparator());
         menu.Items.Add(CreateDiagnosticsMenu());
         menu.Items.Add(new ToolStripSeparator());
-        menu.Items.Add("Exit", null, OnExit);
+        menu.Items.Add("Exit TaskBard", null, OnExit);
 
         menu.Opening += OnMenuOpening;
 
         _notifyIcon = new NotifyIcon
         {
             ContextMenuStrip = menu,
-            Text = "Taskbar Alignment Tool",
+            Text = "TaskBard",
             Visible = true
         };
         _iconRenderer.UpdateIcon(_notifyIcon, 0);
@@ -74,7 +74,7 @@ internal sealed class TrayApplicationContext : ApplicationContext
             {
                 _notifyIcon.ShowBalloonTip(
                     _config.NotificationDurationMs,
-                    "Taskbar Alignment Tool",
+                    "TaskBard",
                     $"Switched to \"{profile.Name}\" ({effectiveWidth}px)",
                     ToolTipIcon.Info);
             }

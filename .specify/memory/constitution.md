@@ -17,7 +17,7 @@ Sync Impact Report
 - Follow-up TODOs: none
 -->
 
-# Taskbar Alignment Tool Constitution
+# TaskBard Constitution
 
 ## Core Principles
 
@@ -90,20 +90,20 @@ signals, and discoverability that a raw `.exe` cannot match.
   window unless explicitly justified
 - **Registry scope**: `HKCU\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced`
   exclusively — never `HKLM`
-- **Configuration**: Single JSON file in `%LOCALAPPDATA%\TaskbarAlignmentTool\`
+- **Configuration**: Single JSON file in `%LOCALAPPDATA%\TaskBard\`
 - **Privileges**: Standard user only — MUST NOT require or request
   elevation
 
 ## Distribution & Packaging
 
-- **Primary channel**: MSIX package via `TaskbarAlignmentTool.Package`
+- **Primary channel**: MSIX package via `TaskBard.Package`
   project, targeting Microsoft Store submission
 - **Secondary channel**: Self-contained single-file publish
   (`dotnet publish -r win-x64 --self-contained`) for sideloading
 - **Startup**: MSIX `StartupTask` declaration in `Package.appxmanifest`;
   registry fallback for non-packaged builds
 - **Assets**: Store icon assets MUST be maintained in
-  `TaskbarAlignmentTool.Package\Images\`
+  `TaskBard.Package\Images\`
 - **Versioning**: MAJOR.MINOR.PATCH following semver; package version
   in `Package.appxmanifest` MUST match assembly version
 

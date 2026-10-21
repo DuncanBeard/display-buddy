@@ -22,7 +22,7 @@ Single-context repo:
 │   ├── 0001-monitorinfo-unified-record.md
 │   ├── 0002-runatstartup-interface-and-adapters.md
 │   └── 0003-runatstartup-silent-failure.md
-└── TaskbarAlignmentTool/
+└── TaskBard/
 ```
 
 ## Use the glossary's vocabulary

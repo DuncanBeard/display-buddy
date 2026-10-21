@@ -1,4 +1,4 @@
-# taskbar-alignment-tool Development Guidelines
+# taskbard Development Guidelines
 
 Auto-generated from all feature plans. Last updated: 2026-03-06
 

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Taskbar Alignment Tool is a Windows 11 system-tray utility that dynamically switches taskbar settings (alignment, button combining, size) based on the primary display's effective resolution. It monitors for display changes (dock/undock, resolution changes) and applies user-defined resolution profiles automatically. No main window — UI is system tray icon + context menu only.
+TaskBard is a Windows 11 system-tray utility that dynamically switches taskbar settings (alignment, button combining, size) based on the primary display's effective resolution. It monitors for display changes (dock/undock, resolution changes) and applies user-defined resolution profiles automatically. No main window — UI is system tray icon + context menu only.
+
+Tagline: "Make your icons dance." It's a metaphor. Functional copy should describe taskbar buttons and **Profile Switches** plainly and never imply animation (see `CONTEXT.md`).
 
 ## Build & Run Commands
 
@@ -22,8 +24,8 @@ All commands use PowerShell. `make.ps1` is the task runner.
 
 Direct dotnet CLI equivalents:
 - `dotnet build`
-- `dotnet run --project TaskbarAlignmentTool`
-- `dotnet publish TaskbarAlignmentTool -c Release -r win-x64 --self-contained -o publish`
+- `dotnet run --project TaskBard`
+- `dotnet publish TaskBard -c Release -r win-x64 --self-contained -o publish`
 
 There is no automated test suite. Testing is manual via Windows Sandbox or running the app and verifying tray menu behavior.
 
@@ -31,7 +33,7 @@ There is no automated test suite. Testing is manual via Windows Sandbox or runni
 
 **Flat module structure** — no DI, no layers, no external NuGet packages. Each file has a single clear responsibility:
 
-1. **Program.cs** — Entry point. Creates single-instance mutex (`Global\TaskbarAlignmentTool_SingleInstance`), loads config, starts `TrayApplicationContext`. Second instance silently exits.
+1. **Program.cs** — Entry point. Creates single-instance mutex (`Global\TaskBard_SingleInstance`), loads config, starts `TrayApplicationContext`. Second instance silently exits.
 2. **TrayApplicationContext.cs** — System tray icon, dynamic context menu (per-monitor info, config reload, startup toggle, diagnostics), tooltip; wires `DisplayMonitor` → `AppConfig` → `TaskbarAligner`. Owns lifecycle of `TrayIconRenderer` and `IRunAtStartup`.
 3. **DisplayMonitor.cs** — Watches the primary display's resolution via three mechanisms: hidden `NativeWindow` for `WM_DISPLAYCHANGE`/`WM_DPICHANGED`, `SystemEvents.DisplaySettingsChanged`, and a low-frequency fallback timer. Publishes `MonitorInfo` via `PrimaryDisplayChanged`.
 4. **MonitorInfo.cs** — Canonical record describing a monitor's state. Pure static `Compute(nativeW, nativeH, dpiX, dpiY)` factory holds the only copy of the DPI-scaling math; `ForPrimaryScreen()` is the cheap Win32 convenience used by the watcher.
@@ -61,10 +63,10 @@ There is no automated test suite. Testing is manual via Windows Sandbox or runni
 
 ## Key Configuration
 
-- **Config file**: `%LOCALAPPDATA%\TaskbarAlignmentTool\config.json`
+- **Config file**: `%LOCALAPPDATA%\TaskBard\config.json`
 - **JSON Schema**: `schema/config.schema.json` (config files reference this via `$schema` for editor autocompletion)
-- **MSIX packaging**: `TaskbarAlignmentTool.Package/` project — keep in sync with main project; version in `Package.appxmanifest` must match assembly version
-- **Publish output**: `publish/win-x64-self-contained/` and `publish/win-x64-framework-dependent/`
+- **MSIX packaging**: `TaskBard.Package/` project — keep in sync with main project; version in `Package.appxmanifest` must match assembly version
+- **Publish output**: `publish/TaskBard-win-x64-self-contained/` and `publish/TaskBard-win-x64-framework-dependent/`
 
 ## Code Conventions
 
@@ -79,7 +81,7 @@ There is no automated test suite. Testing is manual via Windows Sandbox or runni
 
 ### Issue tracker
 
-GitHub Issues at `DuncanBeard/display-buddy` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
+GitHub Issues at `DuncanBeard/taskbard` via the `gh` CLI. See `docs/agents/issue-tracker.md`.
 
 ### Triage labels
 

@@ -1,6 +1,6 @@
 using System.Runtime.InteropServices;
 
-namespace TaskbarAlignmentTool;
+namespace TaskBard;
 
 /// <summary>
 /// Enumerates all connected monitors and their display properties in a single
