@@ -31,7 +31,7 @@
                  EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="TaskBard"
-        Description="Dynamically adjusts Windows 11 taskbar alignment, button combining, and size based on your display resolution."
+        Description="Switches Windows 11 taskbar profiles based on your primary display."
         BackgroundColor="#0096B4"
         Square150x150Logo="Images\StoreLogo_150x150.png"
         Square44x44Logo="Images\StoreLogo_44x44.png">

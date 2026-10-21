@@ -33,6 +33,14 @@ The highest `minWidth` that fits your current effective resolution wins.
 dotnet build
 ```
 
+## Test
+
+```powershell
+.\make.ps1 test
+```
+
+This builds the solution, runs the `TaskBard.Tests` MSTest suite, publishes both release variants and checks the artifacts. It exits non-zero if any check fails. The suite checks project and package metadata and scans active files for abandoned product names and stale repository URLs. ADRs, dated issue records, completed specs and transcripts are allow-listed in `TaskBard.Tests/ProductSurfaceScanner.cs`.
+
 ## Run
 
 ```powershell
@@ -143,6 +151,8 @@ TaskBard/
 TaskBard.Package/               # MSIX packaging project (for Microsoft Store)
 ├── Package.appxmanifest
 └── Images/                     # Store icon assets
+
+TaskBard.Tests/                 # MSTest suite: release metadata + abandoned-name scan (never shipped)
 ```
 
 ## Project Documentation

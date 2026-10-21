@@ -6,8 +6,8 @@
     Usage: .\make.ps1 <command>
 
     Commands:
-      build       Build the project (Debug)
-      test        Build and run quick smoke test
+      build       Build the solution (Debug)
+      test        Build, run MSTest, publish, and run artifact checks
       publish     Build Release packages (framework-dependent + self-contained zips)
       sandbox     Publish then launch the self-contained Windows Sandbox
       sandbox-fd  Publish then launch the framework-dependent Windows Sandbox
@@ -31,16 +31,32 @@ $ErrorActionPreference = 'Stop'
 $root = $PSScriptRoot
 $project = "$root\TaskBard"
 $csproj = "$project\TaskBard.csproj"
+$solution = "$root\TaskBard.slnx"
+$testProject = "$root\TaskBard.Tests"
+
+# Release archives and the folders they are built from. Deliberately restated
+# here rather than shared with Invoke-Publish, so the artifact checks verify
+# what publish produced instead of echoing its own variables back.
+$publishVariants = [ordered]@{
+    "TaskBard-win-x64.zip"               = "TaskBard-win-x64-framework-dependent"
+    "TaskBard-win-x64-self-contained.zip" = "TaskBard-win-x64-self-contained"
+}
+
+# File names that would mean test tooling leaked into a release artifact.
+$testAssemblyPattern = '^(MSTest|Microsoft\.VisualStudio\.TestPlatform|Microsoft\.TestPlatform|Microsoft\.Testing\.|testhost|TaskBard\.Tests)'
 
 function Invoke-Build {
     Write-Host "=== Build (Debug) ===" -ForegroundColor Cyan
-    dotnet build $csproj
+    dotnet build $solution
+    if ($LASTEXITCODE -ne 0) { throw "Build failed" }
 }
 
 function Invoke-Test {
-    Write-Host "=== Build + Smoke Test ===" -ForegroundColor Cyan
-    dotnet build $csproj
-    if ($LASTEXITCODE -ne 0) { throw "Build failed" }
+    Invoke-Build
+
+    Write-Host "`n=== MSTest ===" -ForegroundColor Cyan
+    dotnet test $solution --no-build
+    if ($LASTEXITCODE -ne 0) { throw "Tests failed" }
 
     Write-Host "`n--- Smoke test: verify exe exists ---" -ForegroundColor Yellow
     $exe = Get-ChildItem "$project\bin\Debug\*\TaskBard.exe" -Recurse | Select-Object -First 1
@@ -52,7 +68,43 @@ function Invoke-Test {
     if (-not $dll) { throw "DLL not found" }
     Write-Host "  OK: Assembly present" -ForegroundColor Green
 
-    Write-Host "`n=== All smoke tests passed ===" -ForegroundColor Green
+    # Publish asserts the release artifacts before returning.
+    Write-Host ""
+    Invoke-Publish
+
+    Write-Host "`n=== All tests and artifact checks passed ===" -ForegroundColor Green
+}
+
+function Assert-PublishArtifacts {
+    Write-Host "`n--- Artifact checks ---" -ForegroundColor Yellow
+    Add-Type -AssemblyName System.IO.Compression.FileSystem
+    $publish = "$root\publish"
+
+    $zips = @(Get-ChildItem "$publish\*.zip" | ForEach-Object Name | Sort-Object)
+    $expectedZips = @($publishVariants.Keys | Sort-Object)
+    if (($zips -join '|') -ne ($expectedZips -join '|')) {
+        throw "Expected archives [$($expectedZips -join ', ')] but found [$($zips -join ', ')]"
+    }
+
+    foreach ($zipName in $publishVariants.Keys) {
+        $folder = "$publish\$($publishVariants[$zipName])"
+
+        if (-not (Test-Path "$folder\TaskBard.exe")) { throw "TaskBard.exe missing from $folder" }
+        $leaked = @(Get-ChildItem $folder -Recurse -File | Where-Object Name -Match $testAssemblyPattern)
+        if ($leaked) { throw "Test assemblies in ${folder}: $($leaked.Name -join ', ')" }
+
+        $zip = [System.IO.Compression.ZipFile]::OpenRead("$publish\$zipName")
+        try {
+            $entries = @($zip.Entries | ForEach-Object FullName)
+        } finally {
+            $zip.Dispose()
+        }
+        if ($entries -notcontains "TaskBard.exe") { throw "TaskBard.exe missing from $zipName" }
+        $leaked = @($entries | Where-Object { (Split-Path $_ -Leaf) -match $testAssemblyPattern })
+        if ($leaked) { throw "Test assemblies in ${zipName}: $($leaked -join ', ')" }
+
+        Write-Host "  OK: $zipName <- $($publishVariants[$zipName])\TaskBard.exe, no test assemblies" -ForegroundColor Green
+    }
 }
 
 function Invoke-Publish {
@@ -76,6 +128,8 @@ function Invoke-Publish {
         -DestinationPath "$root\publish\TaskBard-win-x64.zip" -Force
     Compress-Archive -Path "$root\publish\TaskBard-win-x64-self-contained\*" `
         -DestinationPath "$root\publish\TaskBard-win-x64-self-contained.zip" -Force
+
+    Assert-PublishArtifacts
 
     Write-Host "`n=== Publish complete ===" -ForegroundColor Green
     Get-ChildItem "$root\publish\*.zip" | ForEach-Object {
@@ -106,7 +160,7 @@ function Invoke-Run {
 
 function Invoke-Clean {
     Write-Host "=== Clean ===" -ForegroundColor Cyan
-    $dirs = @("$project\bin", "$project\obj", "$root\publish")
+    $dirs = @("$project\bin", "$project\obj", "$testProject\bin", "$testProject\obj", "$root\publish")
     foreach ($d in $dirs) {
         if (Test-Path $d) {
             Remove-Item $d -Recurse -Force
@@ -125,8 +179,8 @@ function Show-Help {
   Usage: .\make.ps1 <command>
 
   Commands:
-    build       Build the project (Debug)
-    test        Build and run smoke tests
+    build       Build the solution (Debug)
+    test        Build, run MSTest, publish, and run artifact checks
     publish     Build Release packages (framework-dependent + self-contained zips)
     sandbox     Publish then launch self-contained Windows Sandbox
     sandbox-fd  Publish then launch framework-dependent Windows Sandbox
@@ -137,14 +191,19 @@ function Show-Help {
 "@ -ForegroundColor White
 }
 
-# Dispatch
-switch ($Command) {
-    "build"      { Invoke-Build }
-    "test"       { Invoke-Test }
-    "publish"    { Invoke-Publish }
-    "sandbox"    { Invoke-Sandbox "TestSelfContained.wsb" }
-    "sandbox-fd" { Invoke-Sandbox "TestFrameworkDependent.wsb" }
-    "run"        { Invoke-Run }
-    "clean"      { Invoke-Clean }
-    "help"       { Show-Help }
+# Dispatch. Any failure exits non-zero so callers (and CI) see it.
+try {
+    switch ($Command) {
+        "build"      { Invoke-Build }
+        "test"       { Invoke-Test }
+        "publish"    { Invoke-Publish }
+        "sandbox"    { Invoke-Sandbox "TestSelfContained.wsb" }
+        "sandbox-fd" { Invoke-Sandbox "TestFrameworkDependent.wsb" }
+        "run"        { Invoke-Run }
+        "clean"      { Invoke-Clean }
+        "help"       { Show-Help }
+    }
+} catch {
+    Write-Host "`nFAILED: $($_.Exception.Message)" -ForegroundColor Red
+    exit 1
 }

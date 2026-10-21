@@ -14,20 +14,21 @@ All commands use PowerShell. `make.ps1` is the task runner.
 
 | Command | Description |
 |---------|-------------|
-| `.\make.ps1 build` | Build (Debug) |
-| `.\make.ps1 test` | Build + smoke test (verifies EXE and DLL exist) |
+| `.\make.ps1 build` | Build the solution (Debug) |
+| `.\make.ps1 test` | Build, run MSTest, publish both variants and check artifacts (non-zero exit on failure) |
 | `.\make.ps1 run` | Build and run the app |
 | `.\make.ps1 publish` | Build Release packages (framework-dependent + self-contained zips) |
 | `.\make.ps1 sandbox` | Publish then launch self-contained Windows Sandbox test |
 | `.\make.ps1 sandbox-fd` | Publish then launch framework-dependent Windows Sandbox test |
-| `.\make.ps1 clean` | Remove bin/, obj/, publish/ |
+| `.\make.ps1 clean` | Remove bin/, obj/ (app and tests), publish/ |
 
 Direct dotnet CLI equivalents:
 - `dotnet build`
+- `dotnet test TaskBard.slnx`
 - `dotnet run --project TaskBard`
 - `dotnet publish TaskBard -c Release -r win-x64 --self-contained -o publish`
 
-There is no automated test suite. Testing is manual via Windows Sandbox or running the app and verifying tray menu behavior.
+`TaskBard.Tests` (MSTest) is the only automated test project. It covers release metadata (it parses the solution, project files and `Package.appxmanifest` as XML) and an abandoned-name scan. That scan checks every text file for retired product names and stale repo URLs, except the historical records allow-listed in `ProductSurfaceScanner.cs`. `make.ps1 test` adds publish-artifact checks: the expected `TaskBard.exe`, archive names, and no test assemblies. Don't add tests for unchanged profile matching, monitor enumeration or registry behavior. Tray rendering and the rest of the runtime are still tested by hand, in Windows Sandbox or by running the app and checking the tray menu.
 
 ## Architecture
 
@@ -56,7 +57,7 @@ There is no automated test suite. Testing is manual via Windows Sandbox or runni
 - **Negligible CPU** when idle
 - **Only HKCU registry writes** — never HKLM, never admin elevation
 - **No main window** — tray icon + context menu only
-- **No external dependencies** — zero NuGet packages beyond .NET/Windows SDK
+- **No external dependencies** — zero NuGet packages beyond .NET/Windows SDK in the app project (test-only packages are confined to `TaskBard.Tests`, which is never shipped)
 - **Must pass MSIX/WACK validation** for Store distribution
 - **Self-contained publish** must remain portable (USB, fresh install, Store)
 - **Pragmatic code** — patterns and abstractions must justify themselves by solving a concrete problem; "good enough and shipping" beats "perfect and stalled"
