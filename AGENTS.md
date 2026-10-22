@@ -54,7 +54,7 @@ Direct dotnet CLI equivalents:
 
 - **Windows 11 only** — relies on Win11-specific registry keys
 - **.NET 8.0** targeting `net8.0-windows10.0.19041.0`
-- **Memory under 30 MB** during normal operation
+- **Memory under 70 MB working set** during normal operation (the Diagnostics figure; measured baseline 65.8 MB, may only go down)
 - **Negligible CPU** when idle
 - **Only HKCU registry writes** — never HKLM, never admin elevation
 - **No main window** — tray icon + context menu only

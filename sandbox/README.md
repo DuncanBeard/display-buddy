@@ -38,5 +38,5 @@ Double-click either `.wsb` file to launch. The sandbox is destroyed when you clo
 2. Right-click menu works (status, profiles, config, diagnostics)
 3. Edit config in Notepad → save → Reload Config → verify profile changes
 4. Change display scaling in sandbox Settings → verify profile switches
-5. Check Diagnostics → memory should be low (~30-50 MB)
+5. Check Diagnostics → memory (working set) should be under 70 MB (baseline ~66 MB)
 6. Launch exe again → second instance should silently exit (mutex)

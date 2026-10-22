@@ -16,7 +16,7 @@ Add per-monitor display information (color depth, HDR status, refresh rate, VRR 
 **Target Platform**: Windows 10 19041+ (Windows 11 required for VRR)  
 **Project Type**: Desktop app (system tray utility)  
 **Performance Goals**: Menu open must feel instantaneous — display enumeration < 10ms  
-**Constraints**: <30 MB memory (constitution I), no admin elevation (constitution V), Store-compatible APIs only (constitution V)  
+**Constraints**: <70 MB working set (constitution I), no admin elevation (constitution V), Store-compatible APIs only (constitution V)  
 **Scale/Scope**: 1–6 connected monitors (typical desktop/docking scenarios)
 
 ## Constitution Check

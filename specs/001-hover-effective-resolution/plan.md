@@ -20,7 +20,7 @@ from the Native menu line to the Effective menu line.
 **Testing**: Manual acceptance testing (no test project)
 **Target Platform**: Windows 11
 **Project Type**: Desktop app (system tray utility)
-**Performance Goals**: Negligible CPU when idle, <30 MB memory
+**Performance Goals**: Negligible CPU when idle, <70 MB working set (constitution I)
 **Constraints**: ≤127-char tooltip (NotifyIcon.Text limit), standard user only (no admin), MSIX-compatible
 **Scale/Scope**: Single-user utility, ~6 source files, 1 project
 

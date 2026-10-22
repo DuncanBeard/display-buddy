@@ -1,5 +1,18 @@
 <!--
 Sync Impact Report
+- Version change: 1.0.0 → 1.1.0
+- Modified principles:
+  - I. Lightweight: the memory limit is now 70 MB working set, set
+    from a measured baseline. The old "30 MB" was an unmeasured
+    placeholder chosen when the constitution was drafted, and it
+    didn't say which memory figure it meant.
+- Dependent docs updated: AGENTS.md, sandbox/README.md,
+  specs/001-hover-effective-resolution/plan.md,
+  specs/002-display-info-menu/plan.md
+- Templates requiring updates: none
+- Follow-up TODOs: reduce the memory baseline (GitHub issue)
+
+Previous report (1.0.0):
 - Version change: N/A → 1.0.0 (initial ratification)
 - Added principles:
   - I. Lightweight
@@ -25,7 +38,12 @@ Sync Impact Report
 
 The tool MUST remain minimal in binary size and runtime resource
 consumption. Background polling MUST use negligible CPU when idle.
-Memory footprint MUST stay under 30 MB during normal operation.
+Memory footprint MUST stay under 70 MB working set (the figure the
+Diagnostics menu shows) during normal operation. The limit comes
+from the measured baseline, not a design target: 65.8 MB working
+set and 15.7 MB private bytes on the packaged build after a 15 s
+settle (2026-10-22). It MAY be lowered as the baseline improves,
+but MUST NOT be raised without a measured justification.
 New features MUST NOT introduce heavy frameworks or large dependency
 trees. If a capability can be achieved with a smaller approach, the
 smaller approach wins.
@@ -123,4 +141,4 @@ evaluated against these principles before implementation.
   a constitution check confirming alignment with all five principles.
   Violations MUST be justified in a complexity tracking table.
 
-**Version**: 1.0.0 | **Ratified**: 2026-03-06 | **Last Amended**: 2026-03-06
+**Version**: 1.1.0 | **Ratified**: 2026-03-06 | **Last Amended**: 2026-10-22
