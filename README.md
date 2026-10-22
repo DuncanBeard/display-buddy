@@ -69,6 +69,14 @@ This produces a standalone `publish\TaskBard.exe` that doesn't require .NET to b
 
 To build both release variants and their zips, run `.\make.ps1 publish`. It writes `publish\TaskBard-win-x64-framework-dependent\`, `publish\TaskBard-win-x64-self-contained\`, `publish\TaskBard-win-x64.zip` and `publish\TaskBard-win-x64-self-contained.zip`.
 
+### MSIX package (local testing)
+
+```powershell
+.\make.ps1 msix
+```
+
+This needs Visual Studio with the MSIX packaging tools and the Windows SDK. It builds `TaskBard.Package`, signs the `.msix` with a self-signed test certificate whose subject matches the manifest `Publisher`, then reinstalls and launches it. The certificate is created in `CurrentUser\My` on first run. Trusting it in `LocalMachine\TrustedPeople` shows one UAC prompt. Reinstalling resets the package's Run at Startup state. Store builds are signed by Partner Center, not by this certificate.
+
 ## Configuration
 
 On first run, a default `config.json` is created at:

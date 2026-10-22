@@ -20,7 +20,8 @@ All commands use PowerShell. `make.ps1` is the task runner.
 | `.\make.ps1 publish` | Build Release packages (framework-dependent + self-contained zips) |
 | `.\make.ps1 sandbox` | Publish then launch self-contained Windows Sandbox test |
 | `.\make.ps1 sandbox-fd` | Publish then launch framework-dependent Windows Sandbox test |
-| `.\make.ps1 clean` | Remove bin/, obj/ (app and tests), publish/ |
+| `.\make.ps1 msix` | Build the MSIX with Visual Studio's MSBuild, sign it with a local self-signed test cert (UAC once to trust it), reinstall and launch it |
+| `.\make.ps1 clean` | Remove bin/, obj/ (app, tests, package), publish/ |
 
 Direct dotnet CLI equivalents:
 - `dotnet build`
