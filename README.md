@@ -146,13 +146,15 @@ TaskBard/
 ├── AppConfig.cs                # JSON config model, load/save, profile matching
 ├── NativeMethods.cs            # P/Invoke declarations
 ├── app.manifest                # Execution level manifest
-└── icon.ico                    # Tray icon
+└── TaskBard.ico                # Executable icon (generated, see assets/)
 
 TaskBard.Package/               # MSIX packaging project (for Microsoft Store)
 ├── Package.appxmanifest
-└── Images/                     # Store icon assets
+└── Images/                     # MSIX package images (generated, see assets/)
 
-TaskBard.Tests/                 # MSTest suite: release metadata + abandoned-name scan (never shipped)
+TaskBard.Tests/                 # MSTest suite: release metadata, asset checks, abandoned-name scan (never shipped)
+
+assets/                         # Icon generator inputs (mark.txt, generate.ps1) and tray icon variants
 ```
 
 ## Project Documentation

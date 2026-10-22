@@ -13,8 +13,8 @@
 
   <Properties>
     <DisplayName>TaskBard</DisplayName>
-    <PublisherDisplayName>REPLACE-WITH-YOUR-NAME</PublisherDisplayName>
-    <Logo>Images\StoreLogo_50x50.png</Logo>
+    <PublisherDisplayName>Duncan Beard</PublisherDisplayName>
+    <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 
   <Dependencies>
@@ -33,11 +33,11 @@
         DisplayName="TaskBard"
         Description="Switches Windows 11 taskbar profiles based on your primary display."
         BackgroundColor="#0096B4"
-        Square150x150Logo="Images\StoreLogo_150x150.png"
-        Square44x44Logo="Images\StoreLogo_44x44.png">
-        <uap:DefaultTile Wide310x150Logo="Images\StoreLogo_310x150.png"
-                         Square310x310Logo="Images\StoreLogo_310x310.png"
-                         Square71x71Logo="Images\StoreLogo_100x100.png" />
+        Square150x150Logo="Images\Square150x150Logo.png"
+        Square44x44Logo="Images\Square44x44Logo.png">
+        <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png"
+                         Square310x310Logo="Images\Square310x310Logo.png"
+                         Square71x71Logo="Images\Square71x71Logo.png" />
       </uap:VisualElements>
 
       <Extensions>

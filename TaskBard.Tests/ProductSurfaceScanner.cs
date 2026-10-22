@@ -48,9 +48,11 @@ internal static class ProductSurfaceScanner
         ("CONTEXT.md", "_Avoid_:"),
     ];
 
-    private static readonly HashSet<string> SkippedDirectories = new(StringComparer.OrdinalIgnoreCase)
+    // Tooling and build output, never committed. Also used by PackageAssetTests.
+    internal static readonly HashSet<string> SkippedDirectories = new(StringComparer.OrdinalIgnoreCase)
     {
         ".git", ".vs", ".worktrees", "bin", "obj", "publish", "TestResults", "node_modules",
+        "AppPackages", "BundleArtifacts",
     };
 
     public static bool IsAllowListed(string relativePath)

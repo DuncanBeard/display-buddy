@@ -9,15 +9,11 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
     <ApplicationHighDpiMode>PerMonitorV2</ApplicationHighDpiMode>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <ApplicationIcon>icon.ico</ApplicationIcon>
+    <ApplicationIcon>TaskBard.ico</ApplicationIcon>
+    <!-- Keep in step with Identity/@Version in TaskBard.Package/Package.appxmanifest (plus a .0 revision). -->
+    <Version>1.0.0</Version>
     <!-- Restore RID-specific assets so the MSIX project (which builds with a RID) and RID publishes work after a plain restore. -->
     <RuntimeIdentifiers>win-x64;win-arm64</RuntimeIdentifiers>
   </PropertyGroup>
-
-  <ItemGroup>
-    <Content Include="icon.ico">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
 
 </Project>

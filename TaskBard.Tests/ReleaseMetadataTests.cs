@@ -12,6 +12,9 @@ public sealed class ReleaseMetadataTests
     private const string AppProject = @"..\TaskBard\TaskBard.csproj";
     private const string PackagedExecutable = @"TaskBard\TaskBard.exe";
     private const string Description = "Switches Windows 11 taskbar profiles based on your primary display.";
+    private const string ReleaseVersion = "1.0.0";
+    private const string PublisherDisplayName = "Duncan Beard";
+    private const string PartnerCenterPlaceholder = "REPLACE-WITH-";
 
     private static readonly XNamespace Foundation = "http://schemas.microsoft.com/appx/manifest/foundation/windows10";
     private static readonly XNamespace Uap = "http://schemas.microsoft.com/appx/manifest/uap/windows10";
@@ -36,6 +39,40 @@ public sealed class ReleaseMetadataTests
         Assert.AreEqual("WinExe", Property(project, "OutputType"));
         // With no AssemblyName override the assembly is named after TaskBard.csproj.
         Assert.AreEqual("TaskBard", Property(project, "AssemblyName") ?? "TaskBard");
+    }
+
+    [TestMethod]
+    public void App_project_has_the_release_version()
+    {
+        Assert.AreEqual(ReleaseVersion, Property(Load("TaskBard/TaskBard.csproj"), "Version"));
+    }
+
+    [TestMethod]
+    public void Manifest_version_matches_the_assembly_version()
+    {
+        var assemblyVersion = Property(Load("TaskBard/TaskBard.csproj"), "Version");
+        var identity = Identity(Load("TaskBard.Package/Package.appxmanifest"));
+
+        // MSIX needs four parts; the revision is always 0.
+        Assert.AreEqual(assemblyVersion + ".0", (string?)identity.Attribute("Version"));
+    }
+
+    [TestMethod]
+    public void Manifest_publisher_display_name_is_Duncan_Beard()
+    {
+        var properties = Load("TaskBard.Package/Package.appxmanifest").Descendants(Foundation + "Properties").Single();
+
+        Assert.AreEqual(PublisherDisplayName, properties.Element(Foundation + "PublisherDisplayName")?.Value);
+    }
+
+    [TestMethod]
+    public void Manifest_Partner_Center_identity_fields_stay_placeholders()
+    {
+        var identity = Identity(Load("TaskBard.Package/Package.appxmanifest"));
+
+        // Assigned by Partner Center at reservation time. Never guess them.
+        StringAssert.StartsWith((string?)identity.Attribute("Name"), PartnerCenterPlaceholder);
+        StringAssert.StartsWith((string?)identity.Attribute("Publisher"), "CN=" + PartnerCenterPlaceholder);
     }
 
     [TestMethod]
@@ -106,6 +143,9 @@ public sealed class ReleaseMetadataTests
     }
 
     private static XDocument Load(string relativePath) => XDocument.Load(RepoRoot.File(relativePath));
+
+    private static XElement Identity(XDocument manifest) =>
+        manifest.Descendants(Foundation + "Identity").Single();
 
     private static XElement VisualElements(XDocument manifest) =>
         manifest.Descendants(Uap + "VisualElements").Single();
